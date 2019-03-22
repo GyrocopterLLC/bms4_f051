@@ -1,8 +1,36 @@
-/*
- * eeprom.c
+/******************************************************************************
+ * Filename: eeprom.c
+ * Description: Provides functions for saving variables to an emulated EEPROM
+ *              (electrically-erasable read only memory).
  *
- *  Created on: Mar 21, 2019
- *      Author: David
+ * Since there is no EEPROM on the STM32F0 microcontroller, this library
+ * instead uses Flash memory pages to perform the data storage. Since Flash
+ * can't be erased at an individual variable, at least two Flash pages are
+ * used. When one Flash page is full, the most recent data is transferred to
+ * the other page, and the first page is cleared. The active page is tracked
+ * by using the first data location in each page. A special value is loaded
+ * there to tell if the current page is active or not.
+ ******************************************************************************
+
+Copyright (c) 2019 David Miller
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
  */
 
 #include "stm32f0xx.h"
@@ -208,8 +236,8 @@ uint16_t EE_Init(void) {
 }
 
 /**
- * @brief  Returns the last stored variable data, if found, which correspond to
- *   the passed virtual address
+ * @brief  Returns the last stored variable data, if found, which corresponds
+ *         to the passed virtual address
  * @param  VirtAddress: Variable virtual address
  * @param  Data: Global variable contains the read variable value
  * @retval Success or error status:
@@ -484,6 +512,8 @@ static uint32_t EE_FindValidPage(uint8_t Operation) {
 
 /**
  * @brief  Verify if active page is full and Writes variable in EEPROM.
+ *         If the active page is full, this functions returns early without
+ *         writing any data.
  * @param  VirtAddress: 16 bit virtual address of the variable
  * @param  Data: 16 bit data to be written as variable value
  * @retval Success or error status:
@@ -540,8 +570,8 @@ static uint16_t EE_VerifyPageFullWriteVariable(uint16_t VirtAddress,
 }
 
 /**
- * @brief  Transfers last updated variables data from the full Page to
- *   an empty one.
+ * @brief  Transfers variable's last updated data from the full Page to
+ *         an empty one.
  * @param  VirtAddress: 16 bit virtual address of the variable
  * @param  Data: 16 bit data to be written as variable value
  * @retval Success or error status:

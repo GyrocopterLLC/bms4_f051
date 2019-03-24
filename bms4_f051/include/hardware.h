@@ -46,7 +46,8 @@ SOFTWARE.
 #define BAL1_PIN        1
 #define BAL2_PIN        0
 #define BAL3_PIN        7
-#define BAL4_PIN        5
+#define BAL4_PIN        6
+#define BAL_AF          1
 
 #define LEDR_PORT       GPIOA
 #define LEDG_PORT       GPIOB
@@ -54,6 +55,8 @@ SOFTWARE.
 #define LEDG_PIN        3
 
 void InitPins(void);
+void GPIO_Balancers_As_Digital_Outputs(void);
+void GPIO_Balancers_As_PWM(void);
 void GPIO_Output(GPIO_TypeDef* gpio, uint8_t pin);
 void GPIO_Input(GPIO_TypeDef* gpio, uint8_t pin);
 void GPIO_InputPD(GPIO_TypeDef* gpio, uint8_t pin);

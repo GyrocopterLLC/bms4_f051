@@ -52,14 +52,7 @@ void InitPins(void) {
   GPIO_AF(UART_DOWN_PORT, UART_RX_DN_PIN, UART_AF);
 
   // BAL pins - set as GPIO output, turned off
-  BAL_PORT_12->ODR &= ~(1 << BAL1_PIN);
-  BAL_PORT_12->ODR &= ~(1 << BAL2_PIN);
-  BAL_PORT_34->ODR &= ~(1 << BAL3_PIN);
-  BAL_PORT_34->ODR &= ~(1 << BAL4_PIN);
-  GPIO_Output(BAL_PORT_12, BAL1_PIN);
-  GPIO_Output(BAL_PORT_12, BAL2_PIN);
-  GPIO_Output(BAL_PORT_34, BAL3_PIN);
-  GPIO_Output(BAL_PORT_34, BAL4_PIN);
+  GPIO_Balancers_As_Digital_Outputs();
 
   // ADC pins - set as analog input
   GPIO_Analog(ADC_PORT, ADC_VS1_PIN);
@@ -76,11 +69,41 @@ void InitPins(void) {
 }
 
 /**
+ * @brief  Configures balance outputs as outputs for on-off control
+ * @param  None
+ * @return None
+ */
+void GPIO_Balancers_As_Digital_Outputs(void)
+{
+  BAL_PORT_12->ODR &= ~(1 << BAL1_PIN);
+  BAL_PORT_12->ODR &= ~(1 << BAL2_PIN);
+  BAL_PORT_34->ODR &= ~(1 << BAL3_PIN);
+  BAL_PORT_34->ODR &= ~(1 << BAL4_PIN);
+  GPIO_Output(BAL_PORT_12, BAL1_PIN);
+  GPIO_Output(BAL_PORT_12, BAL2_PIN);
+  GPIO_Output(BAL_PORT_34, BAL3_PIN);
+  GPIO_Output(BAL_PORT_34, BAL4_PIN);
+}
+
+/**
+ * @brief  Configures balance outputs as timer compare for PWM control
+ * @param  None
+ * @return None
+ */
+void GPIO_Balancers_As_PWM(void)
+{
+  GPIO_AF(BAL_PORT_12, BAL1_PIN, BAL_AF);
+  GPIO_AF(BAL_PORT_12, BAL2_PIN, BAL_AF);
+  GPIO_AF(BAL_PORT_34, BAL3_PIN, BAL_AF);
+  GPIO_AF(BAL_PORT_34, BAL4_PIN, BAL_AF);
+}
+
+/**
  * @brief  Configures a GPIO pin for output.
  *       - Maximum speed (50MHz), No pull up or pull down, Push-Pull output driver
  * @param  gpio: The GPIO Port to be modified
  *         pin: The pin to be set as an output
- * @retval None
+ * @return None
  */
 void GPIO_Output(GPIO_TypeDef* gpio, uint8_t pin) {
   // Clear MODER for this pin
@@ -99,7 +122,7 @@ void GPIO_Output(GPIO_TypeDef* gpio, uint8_t pin) {
  * @brief  Configures a GPIO pin for input.
  * @param  gpio: The GPIO Port to be modified
  *         pin: The pin to be set as an input
- * @retval None
+ * @return None
  */
 void GPIO_Input(GPIO_TypeDef* gpio, uint8_t pin) {
   // Clear MODER for this pin (input mode)
@@ -110,7 +133,7 @@ void GPIO_Input(GPIO_TypeDef* gpio, uint8_t pin) {
  * @brief  Configures a GPIO pin for input with pulldown.
  * @param  gpio: The GPIO Port to be modified
  *         pin: The pin to be set as an input
- * @retval None
+ * @return None
  */
 void GPIO_InputPD(GPIO_TypeDef* gpio, uint8_t pin) {
   // Clear MODER for this pin (input mode)
@@ -126,7 +149,7 @@ void GPIO_InputPD(GPIO_TypeDef* gpio, uint8_t pin) {
  * @brief  Configures a GPIO pin for input with pullup.
  * @param  gpio: The GPIO Port to be modified
  *         pin: The pin to be set as an input
- * @retval None
+ * @return None
  */
 void GPIO_InputPU(GPIO_TypeDef* gpio, uint8_t pin) {
   // Clear MODER for this pin (input mode)
@@ -150,7 +173,7 @@ void GPIO_Analog(GPIO_TypeDef* gpio, uint8_t pin) {
  * @param  gpio: The GPIO Port to be modified
  *         pin: The pin to be set as an output
  *         af: The alternate function setting
- * @retval None
+ * @return None
  */
 void GPIO_AF(GPIO_TypeDef* gpio, uint8_t pin, uint8_t af) {
   // Clear MODER for this pin

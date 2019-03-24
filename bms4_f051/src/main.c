@@ -94,8 +94,8 @@ int main(int argc, char* argv[]) {
       // If we get a end-of-line character, pass the entire string to the UI
       // processor.
       // Then we can clear the buffer.
-      if(strchr_s(comm_buffer, '\n', num_comm_bytes) != 0) {
-        UI_Process(comm_buffer, num_comm_bytes);
+      if(strchr_s(comm_buffer, '\n', comm_place) != 0) {
+        UI_Process(comm_buffer, comm_place);
         comm_place = 0;
         memset(comm_buffer, 0, MAIN_BUFFER_LENGTH);
         num_resp_bytes = UI_RespLen();

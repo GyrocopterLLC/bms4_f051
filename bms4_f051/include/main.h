@@ -29,11 +29,31 @@ SOFTWARE.
 #define MAIN_H_
 
 #define MAIN_FLAG_ADC_COMPLETE              ((uint32_t)0x00000001)
+#define MAIN_FLAG_TRIGGER_ADC               ((uint32_t)0x00000002)
+#define MAIN_FLAG_TRIGGER_UART              ((uint32_t)0x00000004)
 
 #define NUM_BATTERIES                       4
 
+#define MAIN_BUFFER_LENGTH                  128
+
+#define ADC_INTERVAL                        500
+#define UART_INTERVAL                       5
+
 void MAIN_SysTick_Handler(void);
-void MAIN_Set_Flag(uint32_t mainflag);
 void MAIN_Delay(volatile uint32_t delayms);
+
+
+extern volatile uint32_t g_mainFlags;
+inline void MAIN_Set_Flag(uint32_t mainflag) {
+  g_mainFlags |= mainflag;
+}
+
+inline void MAIN_Clear_Flag(uint32_t mainflag) {
+  g_mainFlags &= ~(mainflag);
+}
+
+inline uint8_t MAIN_Check_Flag(uint32_t mainflag) {
+  return ((g_mainFlags & mainflag) != 0) ? 1 : 0;
+}
 
 #endif /* MAIN_H_ */

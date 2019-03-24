@@ -1,6 +1,6 @@
 /******************************************************************************
- * Filename: interrupts.c
- * Description: Provides hardware interrupt service routines (ISRs).
+ * Filename: uart.h
+ * Description: Header file for uart.c, also contains hardware definitions.
  ******************************************************************************
 
 Copyright (c) 2019 David Miller
@@ -23,58 +23,37 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
-#include "stm32f0xx.h"
-#include "main.h"
-#include "adc.h"
-#include "uart.h"
+#ifndef INCLUDE_UART_H_
+#define INCLUDE_UART_H_
 
-/**
- * @brief  This function handles SysTick Handler.
- * @param  None
- * @retval None
- */
-void SysTick_Handler(void) {
-  MAIN_SysTick_Handler();
-}
+#define UP_UART       USART2
+#define DOWN_UART     USART1
 
-/**
- * @brief  This function handles the DMA Channel1 interrupts.
- * @param  None
- * @retval None
- */
-void DMA1_Channel1_IRQHandler(void) {
-  if((DMA1->ISR) & DMA_ISR_TEIF1){
-    // Transfer error
-    DMA1->IFCR |= DMA_IFCR_CTEIF1;
-    ADC_Transfer_Error_Handler();
-  }
-  if((DMA1->ISR) & DMA_ISR_HTIF1) {
-    // Half transfer - not implemented
-    DMA1->IFCR |= DMA_IFCR_CHTIF1;
-  }
-  if((DMA1->ISR) & DMA_ISR_TCIF1){
-    // Transfer complete
-    DMA1->IFCR |= DMA_IFCR_CTCIF1;
-    ADC_Conversion_Complete_Handler();
-  }
-  // Clear global flag for this channel
-  DMA1->IFCR |= DMA_IFCR_CGIF1;
-}
+#define USART_IRQ_PRIORITY          2
+#define USART_BAUD_RATE             115200
+#define USART_BRR_115200_AT_48MHZ   417
 
-/**
- * @brief  This function handles the USART1 interrupts.
- * @param  None
- * @retval None
- */
-void USART1_IRQHandler(void) {
-  UART_Down_Handler();
-}
+#define UART_BUFFER_LENGTH    64
 
-/**
- * @brief  This function handles the USART2 interrupts.
- * @param  None
- * @retval None
- */
-void USART2_IRQHandler(void) {
-  UART_Up_Handler();
-}
+#define UARTSEL_UP            0x01
+#define UARTSEL_DOWN          0x02
+
+typedef struct
+{
+    uint8_t Buffer[UART_BUFFER_LENGTH];
+    uint8_t RdPos, WrPos;
+    uint8_t Done;
+} UARTBuffer_Type;
+
+void UART_Init(void);
+uint8_t UART_Up_Rx(uint8_t* buf, uint8_t count);
+uint8_t UART_Down_Rx(uint8_t* buf, uint8_t count);
+uint8_t UART_Up_Tx(uint8_t* buf, uint8_t count);
+uint8_t UART_Down_Tx(uint8_t* buf, uint8_t count);
+uint8_t UART_Up_Bytes_Available(void);
+uint8_t UART_Down_Bytes_Available(void);
+
+void UART_Down_Handler(void);
+void UART_Up_Handler(void);
+
+#endif /* INCLUDE_UART_H_ */

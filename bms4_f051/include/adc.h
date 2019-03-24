@@ -28,6 +28,8 @@ SOFTWARE.
 #ifndef ADC_H_
 #define ADC_H_
 
+#include "qfixed.h"
+
 // Calibration data locations in system memory
 #define ADC_CALDATA_TS30  (uint32_t)0x1FFFF7B8
 #define ADC_CALDATA_TS110 (uint32_t)0x1FFFF7C2
@@ -49,6 +51,6 @@ SOFTWARE.
 void ADC_Init(void);
 void ADC_Conversion_Complete_Handler(void);
 void ADC_Transfer_Error_Handler(void);
-
+Q16_t adc_battery_voltage(uint8_t which_voltage);
 
 #endif /* ADC_H_ */

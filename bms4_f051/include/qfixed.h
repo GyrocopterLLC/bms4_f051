@@ -48,9 +48,9 @@ SOFTWARE.
 // Some helpful constants in Q16
 #define Q16_EXP_BITS    16
 
-#define Q8_UNIT         (uint32_t)256
-#define Q12_UNIT        (uint32_t)4096
-#define Q16_UNIT        (uint32_t)65536
+#define Q8_UNITARY         (uint32_t)256
+#define Q12_UNITARY        (uint32_t)4096
+#define Q16_UNITARY        (uint32_t)65536
 
 #define Q16_3P3         (uint32_t)216269 // Used for 3.3V calculations
 #define Q16_30P0        (uint32_t)1966080 // Used for temperature calcs (30degC)
@@ -61,13 +61,18 @@ typedef uint32_t UQ16_t; // 16-bits mantissa, 16-bits exponent
                          // [0 to 65535.999...] resolution .00001526
 
 inline Q16_t F2Q16(float inval) {
-  float retval = inval*0x10000;
+  float retval = inval*Q16_UNITARY;
   if(retval >= 0) {
     retval += 0.5f;
   } else {
     retval -= 0.5f;
   }
   return (int32_t)retval;
+}
+
+inline float Q162F(Q16_t inval) {
+  float retval = (float)inval / (float)(Q16_UNITARY);
+  return retval;
 }
 
 inline Q16_t Q16_MUL(Q16_t a, Q16_t b) {

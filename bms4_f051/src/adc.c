@@ -27,9 +27,10 @@ SOFTWARE.
  */
 
 #include "stm32f0xx.h"
+#include "qfixed.h"
 #include "adc.h"
 #include "main.h"
-#include "qfixed.h"
+
 
 Q16_t adc_vrefint_cal;
 Q16_t adc_vrefint;

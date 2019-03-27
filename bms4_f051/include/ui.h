@@ -28,16 +28,17 @@ SOFTWARE.
 
 // Simple string helper functions. "Safe" versions that take a maximum string
 // length parameter.
-int32_t strcmp_s(const uint8_t* in1, const uint8_t* in2, uint32_t count);
-const uint8_t* strchr_s(const uint8_t* str, uint8_t character, uint32_t count);
+int32_t strcmp_s(uint8_t* in1, uint8_t* in2, uint32_t count);
+uint8_t* strchr_s(uint8_t* str, uint8_t character, uint32_t count);
 uint32_t _ftoa(uint8_t* buf, float num, uint32_t precision);
 uint32_t _itoa(uint8_t* buf, int32_t num, uint32_t min_digits);
+float _atof(uint8_t* buf);
 
 #define UI_RESPONSE_BUF_LENGTH     32
 
 uint32_t UI_RespLen(void);
 uint8_t* UI_SendBuf(void);
-int16_t UI_FindInOptionList(uint8_t* inputstring, const uint8_t** options,
+int16_t UI_FindInOptionList(uint8_t* inputstring, uint8_t** options,
     uint16_t numOptions);
 int16_t UI_Process(uint8_t* inputstring, uint8_t count);
 
@@ -51,13 +52,15 @@ int16_t UI_Balance_Command(uint8_t* inputstring);
 #define UI_QUERYEEPROM_CHAR '$'
 #define UI_SETEEPROM_CHAR   '%'
 
-#define UI_ENDL             "\r\n"
+#define UI_ENDL             (uint8_t*)"\r\n"
 #define UI_ENDL_LEN         2
 
 #define UI_ERROR            0
 #define UI_OK               1
 
-#define UI__COMMANDS {"CAL","GET","BAL"}
+#define UI__COMMANDS    { (uint8_t*)"CAL",\
+                          (uint8_t*)"GET",\
+                          (uint8_t*)"BAL"}
 #define UI_NUMCMD     3
 #define UI_OPTION_LEN 3
 

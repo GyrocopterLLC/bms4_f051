@@ -31,7 +31,7 @@ SOFTWARE.
 /**
  * @brief  This function handles SysTick Handler.
  * @param  None
- * @retval None
+ * @return None
  */
 void SysTick_Handler(void) {
   MAIN_SysTick_Handler();
@@ -40,7 +40,7 @@ void SysTick_Handler(void) {
 /**
  * @brief  This function handles the DMA Channel1 interrupts.
  * @param  None
- * @retval None
+ * @return None
  */
 void DMA1_Channel1_IRQHandler(void) {
   if((DMA1->ISR) & DMA_ISR_TEIF1){
@@ -64,7 +64,7 @@ void DMA1_Channel1_IRQHandler(void) {
 /**
  * @brief  This function handles the USART1 interrupts.
  * @param  None
- * @retval None
+ * @return None
  */
 void USART1_IRQHandler(void) {
   UART_Down_Handler();
@@ -73,7 +73,7 @@ void USART1_IRQHandler(void) {
 /**
  * @brief  This function handles the USART2 interrupts.
  * @param  None
- * @retval None
+ * @return None
  */
 void USART2_IRQHandler(void) {
   UART_Up_Handler();

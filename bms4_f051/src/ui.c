@@ -28,6 +28,7 @@
 #include "stm32f0xx.h"
 #include "ui.h"
 #include "qfixed.h"
+#include "main.h"
 #include "adc.h"
 #include <math.h>
 #include <string.h>
@@ -36,13 +37,13 @@ uint8_t* UI_Options_List[UI_NUMCMD] = UI__COMMANDS;
 uint8_t ui_response_buf[UI_RESPONSE_BUF_LENGTH];
 uint8_t ui_response_len = 0;
 
-static void UI_SerialOut(const uint8_t* str, uint8_t len);
+static void UI_SerialOut(uint8_t* str, uint8_t len);
 static void UI_Send_Error(void);
 
 // Doesn't actually send any output, just adds it to the output buffer
 // Function that called UI_Process can call UI_BufLen to see if there's
 // some info to send, and then call UI_SendBuf to retrieve it.
-static void UI_SerialOut(const uint8_t* str, uint8_t len)
+static void UI_SerialOut(uint8_t* str, uint8_t len)
 {
   if(len > 0)
   {
@@ -56,7 +57,7 @@ static void UI_SerialOut(const uint8_t* str, uint8_t len)
 
 // Places the preset error message in the response buffer.
 static void UI_Send_Error(void) {
-  UI_SerialOut("Error\r\n",7);
+  UI_SerialOut((uint8_t*)"Error\r\n",7);
 }
 
 uint32_t UI_RespLen(void)
@@ -101,7 +102,7 @@ void stringflip(uint8_t* buf, uint32_t len) {
  *          +1: string in1 is "larger" (has a higher valued character)
  *          -1: string in2 is "larger"
  */
-int32_t strcmp_s(const uint8_t* in1, const uint8_t* in2, uint32_t count)
+int32_t strcmp_s(uint8_t* in1, uint8_t* in2, uint32_t count)
 {
   for(uint32_t i=0; i<count; i++)
   {
@@ -131,14 +132,14 @@ int32_t strcmp_s(const uint8_t* in1, const uint8_t* in2, uint32_t count)
  * @return Pointer to the first location of character in str. If the character
  *         isn't found, a null pointer is returned.
  */
-const uint8_t* strchr_s(const uint8_t* str, uint8_t character, uint32_t count) {
+uint8_t* strchr_s(uint8_t* str, uint8_t character, uint32_t count) {
   for(uint32_t i = 0; i < count; i++) {
     if(*str == character) {
       return str;
     }
     str++;
   }
-  return (const uint8_t*)0;
+  return (uint8_t*)0;
 }
 
 /**
@@ -195,6 +196,55 @@ uint32_t _itoa(uint8_t* buf, int32_t num, uint32_t min_digits) {
   buf[i] = '\0';
   return i;
 }
+/**
+ * @brief  Converts input string to single-precision floating point. The
+ *         conversion stops at the first non-numeric character. 0 through 9,
+ *         decimal, and a leading negative sign are the only allowed characters
+ * @param  buf: The C string of the input string containing a floating point
+ *              number
+ * @return The converted floating point number, or 0.0f if failed
+ */
+// Converts input string to single-precision floating point
+float _atof(uint8_t* buf)
+{
+  uint8_t* str = buf;
+  float divfactor = 1.0f;
+  float retval = 0.0f;
+  uint8_t decimal_point_happened = 0;
+  if(*str == '-')
+  {
+    divfactor = -1.0f;
+    str++;
+  }
+  // Go through that string!
+  while((*str) != 0)
+  {
+    // Is a digit?
+    if(((*str) >= '0') && ((*str) <= '9'))
+    {
+      if(decimal_point_happened != 0)
+        divfactor = divfactor / 10.0f;
+      retval *= 10.0f;
+      retval += (float)(*str - '0');
+    }
+    else if((*str) == '.')
+    {
+      if(decimal_point_happened != 0)
+      {
+        // This is the second decimal point! Abandon ship!
+        return (retval*divfactor);
+      }
+      decimal_point_happened = 1;
+    }
+    else
+    {
+      // Unknown character, get out now.
+      return (retval * divfactor);
+    }
+    str++;
+  }
+  return (retval * divfactor);
+}
 
 /***
  * UI_FindInOptionList
@@ -211,7 +261,7 @@ uint32_t _itoa(uint8_t* buf, int32_t num, uint32_t min_digits) {
  * -- int16_t: if the string matches an options, the position in the list of that option
  *            otherwise, -1
  */
-int16_t UI_FindInOptionList(uint8_t* inputstring, const uint8_t** options,
+int16_t UI_FindInOptionList(uint8_t* inputstring, uint8_t** options,
     uint16_t numOptions) {
   int16_t retval = -1;
   for (uint16_t i = 0; i < numOptions; i++) {
@@ -256,19 +306,55 @@ int16_t UI_Process(uint8_t* inputstring, uint8_t count) {
   return ui_status;
 }
 
+/**
+ * @brief  Performs calibration of the selected channel. Command request format:
+ *          "CALn,#.###"
+ *          where n is the battery channel (1, 2, 3, or 4)
+ *          and #.### is the floating point value of the actual measured voltage
+ * @param  inputstring: contains the request starting after the end of "CAL"
+ * @return UI_OK for success, UI_ERROR for failure
+ */
 int16_t UI_Calibration_Command(uint8_t* inputstring) {
-  UI_SerialOut("OK\r\n",4);
+  uint8_t batt_num;
+  float actual_voltage;
+  Q16_t fixed_actual_voltage;
+  Q16_t calfactor;
+  uint8_t temp_buf[8];
+  uint8_t temp_len;
+  // First character - battery number
+  batt_num = *inputstring;
+  if((batt_num >= '1') && (batt_num <= ('0' + NUM_BATTERIES))) {
+    inputstring++;
+  } else {
+    UI_Send_Error();
+    return UI_ERROR;
+  }
+  // Second character should be a comma
+  if(*inputstring == ',') {
+    inputstring++;
+  } else {
+    UI_Send_Error();
+    return UI_ERROR;
+  }
+  // Then we need the floating point number
+  actual_voltage = _atof(inputstring);
+  fixed_actual_voltage = F2Q16(actual_voltage);
+  calfactor = adc_calibrate_voltage(batt_num-'0', fixed_actual_voltage);
+  temp_len = _itoa(temp_buf, calfactor, 0);
+  UI_SerialOut((uint8_t*)"Cal factor: ",12);
+  UI_SerialOut(temp_buf, temp_len);
+  UI_SerialOut(UI_ENDL,UI_ENDL_LEN);
   return UI_OK;
 }
 
 int16_t UI_Get_Voltage_Command(uint8_t* inputstring) {
   Q16_t batt_volts;
   uint8_t batt_num;
-  uint8_t tempbuf[16];
+  uint8_t tempbuf[8];
   uint8_t templen;
   // First character - battery number from 1-4
   batt_num = *inputstring;
-  if((batt_num >= '1') && (batt_num <= '4')) {
+  if((batt_num >= '1') && (batt_num <= ('0' + NUM_BATTERIES))) {
     batt_volts = adc_battery_voltage(batt_num - '0');
     inputstring++;
   } else {
@@ -280,18 +366,18 @@ int16_t UI_Get_Voltage_Command(uint8_t* inputstring) {
     // Floating point ASCII
     float outval = Q162F(batt_volts);
     templen = _ftoa(tempbuf, outval, 3);
-    UI_SerialOut("Batt", 4);
+    UI_SerialOut((uint8_t*)"Batt", 4);
     UI_SerialOut(&batt_num, 1);
-    UI_SerialOut(": ",1);
+    UI_SerialOut((uint8_t*)": ",1);
     UI_SerialOut(tempbuf, templen);
     UI_SerialOut(UI_ENDL, UI_ENDL_LEN);
     return UI_OK;
   } else if((*inputstring) == 'D') {
     // Decimal ASCII
     templen = _itoa(tempbuf, batt_volts, 0);
-    UI_SerialOut("Batt", 4);
+    UI_SerialOut((uint8_t*)"Batt", 4);
     UI_SerialOut(&batt_num, 1);
-    UI_SerialOut(": ",1);
+    UI_SerialOut((uint8_t*)": ",1);
     UI_SerialOut(tempbuf, templen);
     UI_SerialOut(UI_ENDL, UI_ENDL_LEN);
     return UI_OK;
@@ -308,6 +394,6 @@ int16_t UI_Get_Voltage_Command(uint8_t* inputstring) {
 }
 
 int16_t UI_Balance_Command(uint8_t* inputstring) {
-  UI_SerialOut("OK\r\n",4);
+  UI_SerialOut((uint8_t*)"OK\r\n",4);
   return UI_OK;
 }

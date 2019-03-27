@@ -59,7 +59,7 @@ static uint16_t FLASH_Program(uint32_t addr, uint16_t data);
  * @brief  Configure the address table with the default list of
  *         EEPROM variables.
  * @param  addrTab - pointer to address list.
- * @retval None.
+ * @return None.
  */
 void EE_Config_Addr_Table(uint16_t* addrTab) {
   uint32_t tabptr = 0;
@@ -77,7 +77,7 @@ void EE_Config_Addr_Table(uint16_t* addrTab) {
  * @brief  Restore the pages to a known good state in case of page's status
  *   corruption after a power loss.
  * @param  None.
- * @retval - Flash error code: on write Flash error
+ * @return - Flash error code: on write Flash error
  *         - FLASH_STATUS_COMPLETE: on success
  */
 uint16_t EE_Init(void) {
@@ -240,7 +240,7 @@ uint16_t EE_Init(void) {
  *         to the passed virtual address
  * @param  VirtAddress: Variable virtual address
  * @param  Data: Global variable contains the read variable value
- * @retval Success or error status:
+ * @return Success or error status:
  *           - 0: if variable was found
  *           - 1: if the variable was not found
  *           - NO_VALID_PAGE: if no valid page was found.
@@ -295,7 +295,7 @@ uint16_t EE_ReadVariable(uint16_t VirtAddress, uint16_t* Data) {
  * @brief  Writes/updates variable data in EEPROM.
  * @param  VirtAddress: Variable virtual address
  * @param  Data: 16 bit data to be written
- * @retval Success or error status:
+ * @return Success or error status:
  *           - FLASH_STATUS_COMPLETE: on success
  *           - PAGE_FULL: if valid page is full
  *           - NO_VALID_PAGE: if no valid page was found
@@ -400,7 +400,7 @@ float EE_ReadFloatWithDefault(uint16_t VirtAddress, float defalt) {
 /**
  * @brief  Erases PAGE and PAGE1 and writes VALID_PAGE header to PAGE
  * @param  None
- * @retval Status of the last operation (Flash write or erase) done during
+ * @return Status of the last operation (Flash write or erase) done during
  *         EEPROM formating
  */
 static uint16_t EE_Format(void) {
@@ -435,7 +435,7 @@ static uint16_t EE_Format(void) {
  *         physical page size and virtual page size is different, this
  *         function will perform the correct erase cycles to compensate.
  * @param  pageAddr: The virtual page to erase
- * @retval Status, error or complete
+ * @return Status, error or complete
  */
 static uint16_t EE_ErasePage(uint32_t pageAddr) {
   uint32_t pageAddrStart = pageAddr;
@@ -463,7 +463,7 @@ static uint16_t EE_ErasePage(uint32_t pageAddr) {
  *   This parameter can be one of the following values:
  *     @arg READ_FROM_VALID_PAGE: read operation from valid page
  *     @arg WRITE_IN_VALID_PAGE: write operation from valid page
- * @retval Valid page number (PAGE or PAGE1) or NO_VALID_PAGE in case
+ * @return Valid page number (PAGE or PAGE1) or NO_VALID_PAGE in case
  *   of no valid page was found
  */
 static uint32_t EE_FindValidPage(uint8_t Operation) {
@@ -516,7 +516,7 @@ static uint32_t EE_FindValidPage(uint8_t Operation) {
  *         writing any data.
  * @param  VirtAddress: 16 bit virtual address of the variable
  * @param  Data: 16 bit data to be written as variable value
- * @retval Success or error status:
+ * @return Success or error status:
  *           - FLASH_STATUS_COMPLETE: on success
  *           - PAGE_FULL: if valid page is full
  *           - NO_VALID_PAGE: if no valid page was found
@@ -574,7 +574,7 @@ static uint16_t EE_VerifyPageFullWriteVariable(uint16_t VirtAddress,
  *         an empty one.
  * @param  VirtAddress: 16 bit virtual address of the variable
  * @param  Data: 16 bit data to be written as variable value
- * @retval Success or error status:
+ * @return Success or error status:
  *           - FLASH_STATUS_COMPLETE: on success
  *           - PAGE_FULL: if valid page is full
  *           - NO_VALID_PAGE: if no valid page was found
@@ -662,7 +662,7 @@ static uint16_t EE_PageTransfer(uint16_t VirtAddress, uint16_t Data) {
 /**
  * @brief  Unlocks access to the Flash for write / erase.
  * @param  None
- * @retval None
+ * @return None
  */
 void FLASH_Unlock(void) {
   while ((FLASH->SR & FLASH_SR_BSY) != 0) {
@@ -678,7 +678,7 @@ void FLASH_Unlock(void) {
 /**
  *  @brief  Re-locks the Flash interface. FLASH_Unlock needed to write or erase.
  *  @param  None
- *  @retval None
+ *  @return None
  */
 void FLASH_Lock(void) {
   while ((FLASH->SR & FLASH_SR_BSY) != 0) {
@@ -692,7 +692,7 @@ void FLASH_Lock(void) {
 /**
  *  @brief  Erases a single Flash page (1kB)
  *  @param  pageAddr: The address of the Flash page to erase
- *  @retval Success or error code:
+ *  @return Success or error code:
  *          - FLASH_STATUS_COMPLETE on correct completion
  *          - FLASH_STATUS_ERROR on any error detected
  */
@@ -721,7 +721,7 @@ uint16_t FLASH_ErasePage(uint32_t pageAddr) {
  *  @brief  Programs a half-word into Flash memory
  *  @param  addr: The memory address of the location to program
  *  @param  data: The 16-bit data to program at that location
- *  @retval Success or error code:
+ *  @return Success or error code:
  *          - FLASH_STATUS_COMPLETE on correct completion
  *          - FLASH_STATUS_ERROR on any error detected
  */

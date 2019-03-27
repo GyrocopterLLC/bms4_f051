@@ -44,7 +44,7 @@ static uint8_t UART_Bytes_Available(uint8_t up_or_down);
  *          uart_up_tx functions. Main program can read data when it is ready
  *          by calling uart_up_rx and uart_down_rx functions.
  *  @param  None
- *  @retval None
+ *  @return None
  */
 void UART_Init(void) {
   // Start by turning on the clocks to the hardware peripherals
@@ -112,7 +112,7 @@ static uint8_t UART_Rx(uint8_t* buf, uint8_t count, uint8_t up_or_down) {
   while ((place < count) && (place < buffer_remaining)) {
     buf[place++] = rxbuff->Buffer[rxbuff->RdPos];
     rxbuff->RdPos = rxbuff->RdPos + 1;
-    if (rxbuff->RdPos > UART_BUFFER_LENGTH)
+    if (rxbuff->RdPos >= UART_BUFFER_LENGTH)
       rxbuff->RdPos = 0;
   }
   // Clear "done" flag if no more bytes to read
@@ -247,7 +247,7 @@ uint8_t UART_Down_Tx(uint8_t* buf, uint8_t count) {
  *         interrupt is triggered for the downstream facing UART.
  *         Buffer management is done in this handler.
  * @param  None
- * @retval None
+ * @return None
  */
 void UART_Down_Handler(void) {
 
@@ -304,7 +304,7 @@ void UART_Down_Handler(void) {
  *         interrupt is triggered for the upstream facing UART.
  *         Buffer management is done in this handler.
  * @param  None
- * @retval None
+ * @return None
  */
 void UART_Up_Handler(void) {
 

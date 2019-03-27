@@ -199,3 +199,23 @@ Q16_t adc_battery_voltage(uint8_t which_voltage) {
     return 0;
   }
 }
+
+/**
+ * @brief  Determines the scale factor to store in calibration data for a given
+ *         voltage conversion. Pass in the actual value measured externally
+ *         and which voltage this was measured on, and the scale factor will
+ *         be calculated and returned.
+ * @param  which_voltage: Valid values are 1, 2, 3, 4
+ * @param  actual_voltage: Real, measured voltage on that channel in Q16 scale
+ * @return The calibration factor in fixed point Q16 scale
+ */
+Q16_t adc_calibrate_voltage(uint8_t which_voltage, Q16_t actual_voltage)
+{
+  Q16_t temp_val;
+  if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
+    temp_val = Q16_DIV(actual_voltage, adc_Vchannels[which_voltage - 1]);
+    return temp_val;
+  } else {
+    return Q16_UNITY;
+  }
+}

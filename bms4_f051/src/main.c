@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
       GPIOA->ODR ^= (1 << 15);
 
       // Trigger ADC conversion
-      ADC1->CR |= ADC_CR_ADSTART;
+      ADC_Trigger();
     }
 
     // Check if there is any data from upstream

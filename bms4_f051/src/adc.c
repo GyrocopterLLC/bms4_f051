@@ -66,9 +66,9 @@ void ADC_Init(void) {
   adc_ts30_cal     = *((uint16_t*)(ADC_CALDATA_TS30));
   adc_ts110_cal    = *((uint16_t*)(ADC_CALDATA_TS110));
   // Change all to 16-bit exponent
-  adc_vrefint_cal <<= ADC_OVERSAMPLING_BITS;
-  adc_ts30_cal <<= ADC_OVERSAMPLING_BITS;
-  adc_ts110_cal <<= ADC_OVERSAMPLING_BITS;
+  adc_vrefint_cal <<= ADC_BITS_TO_Q16;
+  adc_ts30_cal <<= ADC_BITS_TO_Q16;
+  adc_ts110_cal <<= ADC_BITS_TO_Q16;
   // Calculate actual Vrefint in Q16.16 format
   // Calibration data was taken with Vdda = 3.3V
   adc_vrefint = Q16_MUL(adc_vrefint_cal, Q16_3P3);
@@ -111,7 +111,19 @@ void ADC_Init(void) {
   NVIC_EnableIRQ(DMA1_Channel1_IRQn);
   NVIC_SetPriority(DMA1_Channel1_IRQn, 0);
 
-  adc_num_conversions = 0;
+  // Allows ADC to be triggered the first time.
+  adc_num_conversions = ADC_NUMBER_OF_CONV_TO_AVG;
+}
+
+void ADC_Trigger(void)
+{
+  // Only start when ADC isn't currently busy
+  // If num conversions is at the limit, it finished the last round and is
+  // good to go for the next round.
+  if(adc_num_conversions >= ADC_NUMBER_OF_CONV_TO_AVG) {
+    adc_num_conversions = 0;
+    ADC1->CR |= ADC_CR_ADSTART;
+  }
 }
 
 void ADC_Conversion_Complete_Handler(void) {
@@ -134,8 +146,6 @@ void ADC_Conversion_Complete_Handler(void) {
   adc_Vref_Sum += adc_conversion_results[5];
   adc_TS_Sum += adc_conversion_results[4];
 
-
-
   // Reboot the DMA
   DMA1_Channel1->CCR &= ~(DMA_CCR_EN);
   DMA1_Channel1->CNDTR = ADC_NUM_CHANNELS;
@@ -144,20 +154,19 @@ void ADC_Conversion_Complete_Handler(void) {
   adc_num_conversions++;
   if(adc_num_conversions >= ADC_NUMBER_OF_CONV_TO_AVG)
   {
-    adc_num_conversions = 0;
     /* Vdd:
      * Vrefint = Vref_sum * Vdd
      * Vdd = Vrefint (from calibration data) / Vref_sum
      */
-    // All values aleady in Q16 format
-    adc_Vdd = Q16_DIV(adc_vrefint, adc_Vref_Sum);
+    // All values are 24-bit, need to be right-shifted by 8
+    adc_Vdd = Q16_DIV(adc_vrefint, (adc_Vref_Sum >> 8));
 
     /* Temperature:
      * tdegc =  (110-30)*((adc_res * vdd_actual)/vdd_calib - ts30_cal) /
      *          (ts110_cal - ts30_cal) + 30
      */
     // ADC result sum is currently 16-bit (12 bit * 16, or 12 bit << 4)
-    adc_TdegC = Q16_MUL(adc_TS_Sum, adc_Vdd);
+    adc_TdegC = Q16_MUL((adc_TS_Sum>>8), adc_Vdd);
     adc_TdegC = Q16_DIV(adc_TdegC, Q16_3P3);
     adc_TdegC = adc_TdegC - adc_ts30_cal;
     adc_TdegC = Q16_DIV(adc_TdegC, adc_ts110_cal - adc_ts30_cal);
@@ -166,10 +175,10 @@ void ADC_Conversion_Complete_Handler(void) {
     /* Voltages of batteries
      * Vbat = Vbat_sum * Vdd * diff_amp_scaling * calibration_scaling
      */
-    adc_Vchannels[0] = Q16_MUL(adc_V1_Sum,adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
-    adc_Vchannels[1] = Q16_MUL(adc_V2_Sum,adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
-    adc_Vchannels[2] = Q16_MUL(adc_V3_Sum,adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
-    adc_Vchannels[3] = Q16_MUL(adc_V4_Sum,adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
+    adc_Vchannels[0] = Q16_MUL((adc_V1_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
+    adc_Vchannels[1] = Q16_MUL((adc_V2_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
+    adc_Vchannels[2] = Q16_MUL((adc_V3_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
+    adc_Vchannels[3] = Q16_MUL((adc_V4_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
 
     MAIN_Set_Flag(MAIN_FLAG_ADC_COMPLETE);
   }
@@ -192,7 +201,7 @@ void ADC_Transfer_Error_Handler(void) {
  * @param which_voltage: Valid values are 1, 2, 3, 4
  * @return Converted voltage in fixed-point with 16.16 scaling
  */
-Q16_t adc_battery_voltage(uint8_t which_voltage) {
+Q16_t ADC_Battery_Voltage(uint8_t which_voltage) {
   if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
     return adc_Vchannels[which_voltage - 1];
   } else {
@@ -209,7 +218,7 @@ Q16_t adc_battery_voltage(uint8_t which_voltage) {
  * @param  actual_voltage: Real, measured voltage on that channel in Q16 scale
  * @return The calibration factor in fixed point Q16 scale
  */
-Q16_t adc_calibrate_voltage(uint8_t which_voltage, Q16_t actual_voltage)
+Q16_t ADC_Calibrate_Voltage(uint8_t which_voltage, Q16_t actual_voltage)
 {
   Q16_t temp_val;
   if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {

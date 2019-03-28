@@ -339,7 +339,7 @@ int16_t UI_Calibration_Command(uint8_t* inputstring) {
   // Then we need the floating point number
   actual_voltage = _atof(inputstring);
   fixed_actual_voltage = F2Q16(actual_voltage);
-  calfactor = adc_calibrate_voltage(batt_num-'0', fixed_actual_voltage);
+  calfactor = ADC_Calibrate_Voltage(batt_num-'0', fixed_actual_voltage);
   temp_len = _itoa(temp_buf, calfactor, 0);
   UI_SerialOut((uint8_t*)"Cal factor: ",12);
   UI_SerialOut(temp_buf, temp_len);
@@ -355,7 +355,7 @@ int16_t UI_Get_Voltage_Command(uint8_t* inputstring) {
   // First character - battery number from 1-4
   batt_num = *inputstring;
   if((batt_num >= '1') && (batt_num <= ('0' + NUM_BATTERIES))) {
-    batt_volts = adc_battery_voltage(batt_num - '0');
+    batt_volts = ADC_Battery_Voltage(batt_num - '0');
     inputstring++;
   } else {
     UI_Send_Error();

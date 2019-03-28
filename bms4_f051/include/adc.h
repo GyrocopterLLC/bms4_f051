@@ -43,15 +43,17 @@ SOFTWARE.
 #define ADC_CH_TS         16
 #define ADC_CH_VREF       17
 
-#define ADC_NUMBER_OF_CONV_TO_AVG   16 // 4 more bits, brings to 16-bit result
-#define ADC_OVERSAMPLING_BITS       4
+#define ADC_NUMBER_OF_CONV_TO_AVG   4096 // 12 more bits, brings to 24-bit result
+//#define ADC_OVERSAMPLING_BITS       12
+#define ADC_BITS_TO_Q16             4 // 12-bit ADC, 16-bit Q16
 
 #define ADC_DIFFAMP_SCALE_FACTOR    5
 
 void ADC_Init(void);
+void ADC_Trigger(void);
 void ADC_Conversion_Complete_Handler(void);
 void ADC_Transfer_Error_Handler(void);
-Q16_t adc_battery_voltage(uint8_t which_voltage);
-Q16_t adc_calibrate_voltage(uint8_t which_voltage, Q16_t actual_voltage);
+Q16_t ADC_Battery_Voltage(uint8_t which_voltage);
+Q16_t ADC_Calibrate_Voltage(uint8_t which_voltage, Q16_t actual_voltage);
 
 #endif /* ADC_H_ */

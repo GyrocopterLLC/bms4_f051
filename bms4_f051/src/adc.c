@@ -57,6 +57,7 @@ uint32_t adc_TS_Sum;
 Q16_t adc_Vdd;
 Q16_t adc_TdegC;
 Q16_t adc_Vchannels[NUM_BATTERIES];
+Q16_t adc_CalFactors[NUM_BATTERIES] = ADC_DEFAULT_CAL_FACTORS;
 
 uint16_t adc_num_conversions;
 
@@ -179,6 +180,10 @@ void ADC_Conversion_Complete_Handler(void) {
     adc_Vchannels[1] = Q16_MUL((adc_V2_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
     adc_Vchannels[2] = Q16_MUL((adc_V3_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
     adc_Vchannels[3] = Q16_MUL((adc_V4_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
+    adc_Vchannels[0] = Q16_MUL(adc_Vchannels[0], adc_CalFactors[0]);
+    adc_Vchannels[1] = Q16_MUL(adc_Vchannels[1], adc_CalFactors[1]);
+    adc_Vchannels[2] = Q16_MUL(adc_Vchannels[2], adc_CalFactors[2]);
+    adc_Vchannels[3] = Q16_MUL(adc_Vchannels[3], adc_CalFactors[3]);
 
     MAIN_Set_Flag(MAIN_FLAG_ADC_COMPLETE);
   }
@@ -227,4 +232,16 @@ Q16_t ADC_Calibrate_Voltage(uint8_t which_voltage, Q16_t actual_voltage)
   } else {
     return Q16_UNITY;
   }
+}
+
+Q16_t ADC_Get_Calibration(uint8_t which_voltage) {
+    if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
+        return adc_CalFactors[which_voltage-1];
+    }
+    return 0;
+}
+void ADC_Set_Calibration(uint8_t which_voltage, Q16_t newCalFactor) {
+    if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
+        adc_CalFactors[which_voltage - 1] = newCalFactor;
+    }
 }

@@ -25,6 +25,7 @@ SOFTWARE.
  */
 
 #include "stm32f0xx.h"
+#include "uart_data_comm.h"
 #include "data_packet.h"
 #include "data_commands.h"
 #include "uart.h"
@@ -36,6 +37,19 @@ int32_t UART_Data_Comm_RxBuffer_WrPlace;
 uint8_t UART_Data_Comm_DataBuffer[PACKET_MAX_DATA_LENGTH];
 Data_Packet_Type UART_Data_Comm_Packet;
 
+/** Addressing of BMS nodes:
+ *      Address starts as ZERO, meaning unassigned. Normally, if
+ *      a data packet arrives for a different address, the node
+ *      repeats the packet downstream, hoping to find the correct
+ *      recipient. But since all nodes start as zero (they can't
+ *      possibly know how many other nodes exist), there would
+ *      be an address conflict at the start. So only addressed
+ *      nodes repeat packets. This allows a host to continuously
+ *      search for node address zero, assign it a unique address,
+ *      and repeat looking for zero. When zero stops responding,
+ *      that means the end of the chain was reached and all
+ *      nodes have already been addressed.
+ */
 uint8_t UART_My_Address = 0;
 
 // Private functions
@@ -56,7 +70,27 @@ void UART_Data_Comm_Init(void) {
 }
 
 /**
- * @brief  USB Data Communications Periodic Check
+ * @brief  UART Data Set Address
+ * 		Simple set function for the local serial port address.
+ * @param  newAddress - new local address to assign
+ * @retval None
+ */
+void UART_Data_Set_Address(uint8_t newAddress) {
+    UART_My_Address = newAddress;
+}
+
+/**
+ * @brief  UART Data Get Address
+ *      Simple Get function for the local serial port address.
+ * @param  None
+ * @retval The currently assigned address
+ */
+uint8_t UART_Data_Get_Address(void) {
+    return UART_My_Address;
+}
+
+/**
+ * @brief  UART Data Communications Periodic Check
  *       Handles the USB serial port incoming data. Determines
  *       if a properly encoded packet has been received, and
  *       sends to the appropriate handler if it has. Clears
@@ -72,9 +106,12 @@ void UART_Data_Comm_Init(void) {
  * @retval None
  */
 void UART_Data_Comm_Periodic_Check(void) {
-  // check if data is available
-  int32_t numbytes = UART_Up_Bytes_Available();
+
+  int32_t numbytes;
   uint16_t pkt_end;
+  // ****** UPSTREAM ******
+  // check how many bytes came in
+  numbytes = UART_Up_Bytes_Available();
   if(numbytes <= 0) {
     return;
   }
@@ -120,6 +157,15 @@ void UART_Data_Comm_Periodic_Check(void) {
         UART_Data_Comm_RxBuffer + pkt_end,
         PACKET_MAX_LENGTH - pkt_end);
     UART_Data_Comm_RxBuffer_WrPlace = PACKET_MAX_LENGTH - pkt_end;
+  }
+
+  // ****** DOWNSTREAM ******
+  // check how many bytes came in
+  numbytes = UART_Down_Bytes_Available();
+  UART_Down_Rx(UART_Data_Comm_TxBuffer, numbytes);
+  // Only repeat upstream if we are already addressed
+  if(UART_My_Address != 0) {
+      UART_Up_Tx(UART_Data_Comm_TxBuffer, numbytes);
   }
 }
 

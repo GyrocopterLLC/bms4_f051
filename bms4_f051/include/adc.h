@@ -49,11 +49,15 @@ SOFTWARE.
 
 #define ADC_DIFFAMP_SCALE_FACTOR    5
 
+#define ADC_DEFAULT_CAL_FACTORS     {Q16_UNITY, Q16_UNITY, Q16_UNITY, Q16_UNITY}
+
 void ADC_Init(void);
 void ADC_Trigger(void);
 void ADC_Conversion_Complete_Handler(void);
 void ADC_Transfer_Error_Handler(void);
 Q16_t ADC_Battery_Voltage(uint8_t which_voltage);
 Q16_t ADC_Calibrate_Voltage(uint8_t which_voltage, Q16_t actual_voltage);
+Q16_t ADC_Get_Calibration(uint8_t which_voltage);
+void ADC_Set_Calibration(uint8_t which_voltage, Q16_t newCalFactor);
 
 #endif /* ADC_H_ */

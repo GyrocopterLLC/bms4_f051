@@ -22,3 +22,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
+
+#ifndef _UART_DATA_COMM_H_
+#define _UART_DATA_COMM_H_
+
+void UART_Data_Comm_Init(void);
+void UART_Data_Comm_Periodic_Check(void);
+
+void UART_Data_Set_Address(uint8_t newAddress);
+uint8_t UART_Data_Get_Address(void);
+
+#endif //_UART_DATA_COMM_H_

@@ -394,6 +394,7 @@ int16_t UI_Get_Voltage_Command(uint8_t* inputstring) {
 }
 
 int16_t UI_Balance_Command(uint8_t* inputstring) {
+	((void)inputstring);
   UI_SerialOut((uint8_t*)"OK\r\n",4);
   return UI_OK;
 }

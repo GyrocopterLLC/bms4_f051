@@ -28,6 +28,9 @@ SOFTWARE.
 #ifndef EEPROM_H_
 #define EEPROM_H_
 
+// Needed for the predefined EEPROM variable addresses
+#include "data_commands.h"
+
 #define FLASH_KEY1    ((uint32_t)0x45670123)
 #define FLASH_KEY2    ((uint32_t)0xCDEF89AB)
 
@@ -76,10 +79,10 @@ SOFTWARE.
 #define EE_HIBYTE_FLAG            0x8000
 
 #define NB_OF_VAR                 4
-#define EE_ADR_V1_SCALE           0x2001
-#define EE_ADR_V2_SCALE           0x2002
-#define EE_ADR_V3_SCALE           0x2003
-#define EE_ADR_V4_SCALE           0x2004
+#define EE_ADR_V1_SCALE           (RE_CAL_BATT1)
+#define EE_ADR_V2_SCALE           (RE_CAL_BATT2)
+#define EE_ADR_V3_SCALE           (RE_CAL_BATT3)
+#define EE_ADR_V4_SCALE           (RE_CAL_BATT4)
 #define DEFAULT_ADDR_LIST { EE_ADR_V1_SCALE, EE_ADR_V2_SCALE, \
   EE_ADR_V3_SCALE, EE_ADR_V4_SCALE}
 

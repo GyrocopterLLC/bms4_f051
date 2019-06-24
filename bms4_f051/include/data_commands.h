@@ -26,8 +26,7 @@ SOFTWARE.
 #ifndef _DATA_COMMANDS_H_
 #define _DATA_COMMANDS_H_
 
-// Needed for the predefined EEPROM variable addresses
-#include "eeprom.h"
+#include "data_packet.h"
 
 #define RESULT_IS_8B				    (2)
 #define RESULT_IS_16B				    (3)
@@ -37,22 +36,21 @@ SOFTWARE.
 #define HOST_ADDRESS            (0xFF)
 
 // RAM variables
-#define R_VOLT_BATT1        (0x1001)
-#define R_VOLT_BATT2        (0x1002)
-#define R_VOLT_BATT3        (0x1003)
-#define R_VOLT_BATT4        (0x1004)
-#define R_ADDRESS           (0x1011)
+#define R_VOLT_BATT1        ((uint16_t)0x1001)
+#define R_VOLT_BATT2        ((uint16_t)0x1002)
+#define R_VOLT_BATT3        ((uint16_t)0x1003)
+#define R_VOLT_BATT4        ((uint16_t)0x1004)
+#define R_ADDRESS           ((uint16_t)0x1011)
 // RAM/EEPROM variables
-#define RE_CAL_BATT1        (EE_ADR_V1_SCALE)
-#define RE_CAL_BATT2        (EE_ADR_V2_SCALE)
-#define RE_CAL_BATT3        (EE_ADR_V3_SCALE)
-#define RE_CAL_BATT4        (EE_ADR_V4_SCALE)
+#define RE_CAL_BATT1        ((uint16_t)0x2001)
+#define RE_CAL_BATT2        ((uint16_t)0x2002)
+#define RE_CAL_BATT3        ((uint16_t)0x2003)
+#define RE_CAL_BATT4        ((uint16_t)0x2004)
 // Actions
-#define ACTION_SET_ADDRESS  (0x3001)
-#define ACTION_CAL_BATT1    (0x4001)
-#define ACTION_CAL_BATT2    (0x4001)
-#define ACTION_CAL_BATT3    (0x4001)
-#define ACTION_CAL_BATT4    (0x4001)
+#define ACTION_CAL_BATT1    ((uint16_t)0x4001)
+#define ACTION_CAL_BATT2    ((uint16_t)0x4001)
+#define ACTION_CAL_BATT3    ((uint16_t)0x4001)
+#define ACTION_CAL_BATT4    ((uint16_t)0x4001)
 
 uint16_t data_process_command(Data_Packet_Type* pkt);
 uint16_t command_get_ram(uint8_t* pktdata, uint8_t* retval);

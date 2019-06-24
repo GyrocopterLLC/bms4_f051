@@ -49,7 +49,7 @@ void InitSysclkInterrupt(void);
 
 // ----- main() ---------------------------------------------------------------
 
-int main(int argc, char* argv[]) {
+int main(void) {
   uint8_t num_comm_bytes=0, num_resp_bytes=0;
   uint8_t comm_place=0;
 

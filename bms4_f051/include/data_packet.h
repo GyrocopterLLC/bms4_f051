@@ -43,15 +43,15 @@ typedef struct
     uint8_t* TxBuffer;
 } Data_Packet_Type;
 
-#define DATA_PACKET_FAIL		      (0)
-#define DATA_PACKET_SUCCESS		    (1)
+#define DATA_PACKET_FAIL        (0)
+#define DATA_PACKET_SUCCESS     (1)
 
-#define PACKET_MAX_LENGTH         (256)
-#define PACKET_MAX_DATA_LENGTH    (64)
+#define PACKET_MAX_LENGTH       (256)
+#define PACKET_MAX_DATA_LENGTH  (64)
 
-#define PACKET_OVERHEAD_BYTES		  (10)
-#define PACKET_CRC_BYTES			    (4)
-#define PACKET_NONCRC_OVHD_BYTES	(PACKET_OVERHEAD_BYTES - PACKET_CRC_BYTES)
+#define PACKET_OVERHEAD_BYTES   (10)
+#define PACKET_CRC_BYTES        (4)
+#define PACKET_NONCRC_OVHD_BYTES   (PACKET_OVERHEAD_BYTES - PACKET_CRC_BYTES)
 
 // SOP defines
 #define PACKET_START_0          (0x9A)

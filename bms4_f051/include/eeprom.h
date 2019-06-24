@@ -76,10 +76,10 @@ SOFTWARE.
 #define EE_HIBYTE_FLAG            0x8000
 
 #define NB_OF_VAR                 4
-#define EE_ADR_V1_SCALE           0x1001
-#define EE_ADR_V2_SCALE           0x1002
-#define EE_ADR_V3_SCALE           0x1003
-#define EE_ADR_V4_SCALE           0x1004
+#define EE_ADR_V1_SCALE           0x2001
+#define EE_ADR_V2_SCALE           0x2002
+#define EE_ADR_V3_SCALE           0x2003
+#define EE_ADR_V4_SCALE           0x2004
 #define DEFAULT_ADDR_LIST { EE_ADR_V1_SCALE, EE_ADR_V2_SCALE, \
   EE_ADR_V3_SCALE, EE_ADR_V4_SCALE}
 

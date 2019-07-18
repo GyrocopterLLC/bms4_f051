@@ -48,9 +48,13 @@ SOFTWARE.
 #define RE_CAL_BATT4        ((uint16_t)0x2004)
 // Actions
 #define ACTION_CAL_BATT1    ((uint16_t)0x4001)
-#define ACTION_CAL_BATT2    ((uint16_t)0x4001)
-#define ACTION_CAL_BATT3    ((uint16_t)0x4001)
-#define ACTION_CAL_BATT4    ((uint16_t)0x4001)
+#define ACTION_CAL_BATT2    ((uint16_t)0x4002)
+#define ACTION_CAL_BATT3    ((uint16_t)0x4003)
+#define ACTION_CAL_BATT4    ((uint16_t)0x4004)
+#define ACTION_CAL_AND_SAVE_BATT1   ((uint16_t)0x4011)
+#define ACTION_CAL_AND_SAVE_BATT2   ((uint16_t)0x4012)
+#define ACTION_CAL_AND_SAVE_BATT3   ((uint16_t)0x4013)
+#define ACTION_CAL_AND_SAVE_BATT4   ((uint16_t)0x4014)
 
 uint16_t data_process_command(Data_Packet_Type* pkt);
 uint16_t command_get_ram(uint8_t* pktdata, uint8_t* retval);

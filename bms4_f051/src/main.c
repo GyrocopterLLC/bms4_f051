@@ -34,7 +34,11 @@ SOFTWARE.
 #include "eeprom.h"
 #include "adc.h"
 #include "uart.h"
-#include "ui.h"
+#include "crc32.h"
+#include "data_packet.h"
+#include "data_commands.h"
+#include "uart_data_comm.h"
+//#include "ui.h"
 
 // ----------------------------------------------------------------------------
 volatile uint32_t g_systickCounter = 0;
@@ -42,7 +46,7 @@ volatile uint32_t g_mainFlags = 0;
 
 uint16_t VirtAddVarTab[NB_OF_VAR];
 
-uint8_t comm_buffer[MAIN_BUFFER_LENGTH];
+//uint8_t comm_buffer[MAIN_BUFFER_LENGTH];
 // ----------------------------------------------------------------------------
 
 void InitSysclkInterrupt(void);
@@ -50,8 +54,8 @@ void InitSysclkInterrupt(void);
 // ----- main() ---------------------------------------------------------------
 
 int main(void) {
-  uint8_t num_comm_bytes=0, num_resp_bytes=0;
-  uint8_t comm_place=0;
+//  uint8_t num_comm_bytes=0, num_resp_bytes=0;
+//  uint8_t comm_place=0;
 
   // Hardware initializations and setup.
   InitPins();
@@ -60,6 +64,8 @@ int main(void) {
   EE_Config_Addr_Table(VirtAddVarTab);
   EE_Init();
   UART_Init();
+  UART_Data_Comm_Init();
+  CRC32_Init();
   // Set the green LED on
   GPIOB->ODR |= 1 << 3;
 
@@ -80,6 +86,12 @@ int main(void) {
     // Check if there is any data from upstream
     if(MAIN_Check_Flag(MAIN_FLAG_TRIGGER_UART)) {
       MAIN_Clear_Flag(MAIN_FLAG_TRIGGER_UART);
+
+      UART_Data_Comm_Periodic_Check();
+
+      /** old version
+       *
+       *
       num_comm_bytes = UART_Up_Bytes_Available();
       if((num_comm_bytes + comm_place) > MAIN_BUFFER_LENGTH) {
         // Overrun! We'll have to clear the buffer and try again.
@@ -105,6 +117,8 @@ int main(void) {
       }
 
 //      if(num_comm_bytes > 0) UART_Up_Tx(comm_buffer, num_comm_bytes);
+
+      */
 
     }
   }

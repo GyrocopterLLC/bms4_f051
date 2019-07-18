@@ -278,7 +278,60 @@ uint16_t command_disable_feature(uint8_t* pktdata) {
 	return DATA_PACKET_FAIL;
 }
 
-uint16_t command_run_routine(uint8_t* pktdata) {
-	((void)pktdata);
-	return DATA_PACKET_FAIL;
+uint16_t command_run_routine(uint8_t* pktdata, uint8_t* retval) {
+	uint16_t errCode = DATA_PACKET_FAIL;
+	uint16_t value_ID = data_packet_extract_16b(pktdata);
+	pktdata+=2;
+
+	uint32_t value32b;
+
+	switch (value_ID) {
+    case ACTION_CAL_BATT1:
+        value32b = data_packet_extract_32b(pktdata);
+        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(1, value32b));
+        errCode = RESULT_IS_32B;
+        break;
+    case ACTION_CAL_BATT2:
+        value32b = data_packet_extract_32b(pktdata);
+        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(2, value32b));
+        errCode = RESULT_IS_32B;
+        break;
+    case ACTION_CAL_BATT3:
+        value32b = data_packet_extract_32b(pktdata);
+        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(3, value32b));
+        errCode = RESULT_IS_32B;
+        break;
+    case ACTION_CAL_BATT4:
+        value32b = data_packet_extract_32b(pktdata);
+        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(4, value32b));
+        errCode = RESULT_IS_32B;
+        break;
+    case ACTION_CAL_AND_SAVE_BATT1:
+        value32b = data_packet_extract_32b(pktdata);
+        ADC_Set_Calibration(1, ADC_Calibrate_Voltage(1, value32b));
+        // TODO save to eeprom
+        errCode = DATA_PACKET_SUCCESS;
+        break;
+    case ACTION_CAL_AND_SAVE_BATT2:
+        value32b = data_packet_extract_32b(pktdata);
+        ADC_Set_Calibration(2, ADC_Calibrate_Voltage(2, value32b));
+        // TODO save to eeprom
+        errCode = DATA_PACKET_SUCCESS;
+        break;
+    case ACTION_CAL_AND_SAVE_BATT3:
+        value32b = data_packet_extract_32b(pktdata);
+        ADC_Set_Calibration(3, ADC_Calibrate_Voltage(3, value32b));
+        // TODO save to eeprom
+        errCode = DATA_PACKET_SUCCESS;
+        break;
+    case ACTION_CAL_AND_SAVE_BATT4:
+        value32b = data_packet_extract_32b(pktdata);
+        ADC_Set_Calibration(4, ADC_Calibrate_Voltage(4, value32b));
+        // TODO save to eeprom
+        errCode = DATA_PACKET_SUCCESS;
+        break;
+
+    }
+
+	return errCode;
 }

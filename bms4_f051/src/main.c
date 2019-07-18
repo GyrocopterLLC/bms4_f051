@@ -136,6 +136,10 @@ void MAIN_Delay(volatile uint32_t delayms) {
   }
 }
 
+uint32_t GetTick(void) {
+    return g_systickCounter;
+}
+
 // Interrupt handlers ---------------------------------------------------------
 void MAIN_SysTick_Handler(void) {
   g_systickCounter++;

@@ -117,14 +117,27 @@ inline uint32_t data_packet_extract_32b(uint8_t* array) {
 	return u32Temp;
 }
 
+// Note that internally the ARM Cortex M4 uses little-endian. The least significant
+// byte of a 32-bit value is stored first. The data format is big endian, so we gotta flip.
 inline void data_packet_pack_float(uint8_t* array, float value) {
-	memcpy(array, &value, 4);
+    uint8_t* fptr = (uint8_t*) (&value);
+
+    array[0] = fptr[3];
+    array[1] = fptr[2];
+    array[2] = fptr[1];
+    array[3] = fptr[0];
 }
 
-inline float data_packet_extract_float(uint8_t* array) {
-	float fTemp;
-	memcpy(&fTemp, array, 4);
-	return fTemp;
+inline float data_packet_extract_float(uint8_t* array)  {
+    float fTemp;
+    uint8_t* fptr = (uint8_t*) (&fTemp);
+
+    fptr[0] = array[3];
+    fptr[1] = array[2];
+    fptr[2] = array[1];
+    fptr[3] = array[0];
+
+    return fTemp;
 }
 
 uint8_t data_packet_create(Data_Packet_Type* pkt, uint8_t type,

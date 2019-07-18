@@ -41,7 +41,7 @@ SOFTWARE.
 
 void MAIN_SysTick_Handler(void);
 void MAIN_Delay(volatile uint32_t delayms);
-
+uint32_t GetTick(void);
 
 extern volatile uint32_t g_mainFlags;
 inline void MAIN_Set_Flag(uint32_t mainflag) {

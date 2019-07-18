@@ -35,6 +35,9 @@ SOFTWARE.
 
 #define UART_BUFFER_LENGTH    64
 
+#define UART_TX_TIMEOUT_MS      3   // milliseconds to timeout
+                                    // when waiting for Tx to clear
+
 #define UARTSEL_UP            0x01
 #define UARTSEL_DOWN          0x02
 
@@ -45,13 +48,15 @@ typedef struct
     uint8_t Done;
 } UARTBuffer_Type;
 
+uint16_t UART_CalcBRR(uint32_t fck, uint32_t baud, uint8_t over8);
+
 void UART_Init(void);
-uint8_t UART_Up_Rx(uint8_t* buf, uint8_t count);
-uint8_t UART_Down_Rx(uint8_t* buf, uint8_t count);
-uint8_t UART_Up_Tx(uint8_t* buf, uint8_t count);
-uint8_t UART_Down_Tx(uint8_t* buf, uint8_t count);
-uint8_t UART_Up_Bytes_Available(void);
-uint8_t UART_Down_Bytes_Available(void);
+int32_t UART_Up_Rx(uint8_t* buf, uint32_t count);
+int32_t UART_Down_Rx(uint8_t* buf, uint32_t count);
+int32_t UART_Up_Tx(uint8_t* buf, uint32_t count);
+int32_t UART_Down_Tx(uint8_t* buf, uint32_t count);
+int32_t UART_Up_Bytes_Available(void);
+int32_t UART_Down_Bytes_Available(void);
 
 void UART_Down_Handler(void);
 void UART_Up_Handler(void);

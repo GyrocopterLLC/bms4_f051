@@ -31,6 +31,9 @@ SOFTWARE.
 #include "data_commands.h"
 #include "uart_data_comm.h"
 #include "adc.h"
+#include "eeprom.h"
+
+static uint8_t command_check_valid_cal(Q16_t real_volts);
 
 /**
  * @brief  Data Process Command
@@ -278,60 +281,112 @@ uint16_t command_disable_feature(uint8_t* pktdata) {
 	return DATA_PACKET_FAIL;
 }
 
-uint16_t command_run_routine(uint8_t* pktdata, uint8_t* retval) {
+uint16_t command_run_routine(uint8_t* pktdata) {
 	uint16_t errCode = DATA_PACKET_FAIL;
 	uint16_t value_ID = data_packet_extract_16b(pktdata);
 	pktdata+=2;
 
 	uint32_t value32b;
+	Q16_t newcal;
 
 	switch (value_ID) {
     case ACTION_CAL_BATT1:
         value32b = data_packet_extract_32b(pktdata);
-        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(1, value32b));
-        errCode = RESULT_IS_32B;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(1, value32b);
+            ADC_Set_Calibration(1, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_BATT2:
         value32b = data_packet_extract_32b(pktdata);
-        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(2, value32b));
-        errCode = RESULT_IS_32B;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(2, value32b);
+            ADC_Set_Calibration(2, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_BATT3:
         value32b = data_packet_extract_32b(pktdata);
-        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(3, value32b));
-        errCode = RESULT_IS_32B;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(3, value32b);
+            ADC_Set_Calibration(3, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_BATT4:
         value32b = data_packet_extract_32b(pktdata);
-        data_packet_pack_32b(retval, ADC_Calibrate_Voltage(4, value32b));
-        errCode = RESULT_IS_32B;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(4, value32b);
+            ADC_Set_Calibration(4, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_AND_SAVE_BATT1:
         value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(1, ADC_Calibrate_Voltage(1, value32b));
-        // TODO save to eeprom
-        errCode = DATA_PACKET_SUCCESS;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(1, value32b);
+            ADC_Set_Calibration(1, newcal);
+            EE_SaveInt32(RE_CAL_BATT1, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_AND_SAVE_BATT2:
         value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(2, ADC_Calibrate_Voltage(2, value32b));
-        // TODO save to eeprom
-        errCode = DATA_PACKET_SUCCESS;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(2, value32b);
+            ADC_Set_Calibration(2, newcal);
+            EE_SaveInt32(RE_CAL_BATT2, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_AND_SAVE_BATT3:
         value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(3, ADC_Calibrate_Voltage(3, value32b));
-        // TODO save to eeprom
-        errCode = DATA_PACKET_SUCCESS;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(3, value32b);
+            ADC_Set_Calibration(3, newcal);
+            EE_SaveInt32(RE_CAL_BATT3, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
     case ACTION_CAL_AND_SAVE_BATT4:
         value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(4, ADC_Calibrate_Voltage(4, value32b));
-        // TODO save to eeprom
-        errCode = DATA_PACKET_SUCCESS;
+        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+            newcal = ADC_Calibrate_Voltage(4, value32b);
+            ADC_Set_Calibration(4, newcal);
+            EE_SaveInt32(RE_CAL_BATT4, newcal);
+            errCode = DATA_PACKET_SUCCESS;
+        } else {
+            errCode = DATA_PACKET_FAIL;
+        }
         break;
 
     }
 
 	return errCode;
+}
+
+// Look for valid data coming in
+static uint8_t command_check_valid_cal(Q16_t real_volts) {
+    if(real_volts < 0) {
+        return DATA_PACKET_FAIL;
+    }
+    if(real_volts > F2Q16(5.5f)){
+        return DATA_PACKET_FAIL;
+    }
+    return DATA_PACKET_SUCCESS;
 }

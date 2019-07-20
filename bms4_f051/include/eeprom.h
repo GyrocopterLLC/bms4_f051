@@ -78,16 +78,8 @@ SOFTWARE.
 #define EE_LOBYTE_FLAG            0x0000
 #define EE_HIBYTE_FLAG            0x8000
 
-#define NB_OF_VAR                 4
-#define EE_ADR_V1_SCALE           (RE_CAL_BATT1)
-#define EE_ADR_V2_SCALE           (RE_CAL_BATT2)
-#define EE_ADR_V3_SCALE           (RE_CAL_BATT3)
-#define EE_ADR_V4_SCALE           (RE_CAL_BATT4)
-#define DEFAULT_ADDR_LIST { EE_ADR_V1_SCALE, EE_ADR_V2_SCALE, \
-  EE_ADR_V3_SCALE, EE_ADR_V4_SCALE}
-
 void EE_Config_Addr_Table(uint16_t* addrTab);
-uint16_t EE_Init(void);
+uint16_t EE_Init(uint16_t* addrTab);
 uint16_t EE_WriteVariable(uint16_t VirtAddress, uint16_t Data);
 uint16_t EE_SaveInt16(uint16_t VirtAddress, int16_t Data);
 uint16_t EE_SaveInt32(uint16_t VirtAddress, int32_t Data);

@@ -35,26 +35,47 @@ SOFTWARE.
 
 #define HOST_ADDRESS            (0xFF)
 
-// RAM variables
-#define R_VOLT_BATT1        ((uint16_t)0x1001)
-#define R_VOLT_BATT2        ((uint16_t)0x1002)
-#define R_VOLT_BATT3        ((uint16_t)0x1003)
-#define R_VOLT_BATT4        ((uint16_t)0x1004)
-#define R_ADDRESS           ((uint16_t)0x1011)
+// RAM only variables
+#define R_VOLT_BATT1        ((uint16_t)0x0001)
+#define R_VOLT_BATT2        ((uint16_t)0x0002)
+#define R_VOLT_BATT3        ((uint16_t)0x0003)
+#define R_VOLT_BATT4        ((uint16_t)0x0004)
+#define R_ADDRESS           ((uint16_t)0x0011)
+
 // RAM/EEPROM variables
-#define RE_CAL_BATT1        ((uint16_t)0x2001)
-#define RE_CAL_BATT2        ((uint16_t)0x2002)
-#define RE_CAL_BATT3        ((uint16_t)0x2003)
-#define RE_CAL_BATT4        ((uint16_t)0x2004)
+#define RE_PREFIX           ((uint16_t)0x0100)
+#define RE_NUMVARS          (8)
+// Calibration constants
+#define RE_CAL_BATT1        ((uint16_t)0x0101) // Calibration for battery 1
+#define RE_CAL_BATT2        ((uint16_t)0x0102) // "" 2
+#define RE_CAL_BATT3        ((uint16_t)0x0103) // "" 3
+#define RE_CAL_BATT4        ((uint16_t)0x0104) // "" 4
+// Limits
+#define RE_BATT_OVLIM       ((uint16_t)0x0105) // Maximum battery voltage - over this causes fault
+#define RE_BATT_UVLIM       ((uint16_t)0x0106) // Minimum battery voltage - under this causes fault
+// When to balance
+#define RE_BATT_SOFTBAL     ((uint16_t)0x0107) // Beginning of balance - starts PWM balancing
+#define RE_BATT_HARDBAL     ((uint16_t)0x0108) // End of balance - above this, balance is on full (no PWM)
+
+// Defaults
+#define DFLT_CAL_BATT1      ((uint32_t)0x00010000) // Q16 unity
+#define DFLT_CAL_BATT2      ((uint32_t)0x00010000) // Q16 unity
+#define DFLT_CAL_BATT3      ((uint32_t)0x00010000) // Q16 unity
+#define DFLT_CAL_BATT4      ((uint32_t)0x00010000) // Q16 unity
+#define DFLT_BATT_OVLIM     ((uint32_t)0x00044CCC) // Q16 4.3
+#define DFLT_BATT_UVLIM     ((uint32_t)0x00028000) // Q16 2.5
+#define DFLT_BATT_SOFTBAL   ((uint32_t)0x00042666) // Q16 4.15
+#define DFLT_BATT_HARDBAL   ((uint32_t)0x00044000) // Q16 4.25
+
 // Actions
-#define ACTION_CAL_BATT1    ((uint16_t)0x4001)
-#define ACTION_CAL_BATT2    ((uint16_t)0x4002)
-#define ACTION_CAL_BATT3    ((uint16_t)0x4003)
-#define ACTION_CAL_BATT4    ((uint16_t)0x4004)
-#define ACTION_CAL_AND_SAVE_BATT1   ((uint16_t)0x4011)
-#define ACTION_CAL_AND_SAVE_BATT2   ((uint16_t)0x4012)
-#define ACTION_CAL_AND_SAVE_BATT3   ((uint16_t)0x4013)
-#define ACTION_CAL_AND_SAVE_BATT4   ((uint16_t)0x4014)
+#define ACTION_CAL_BATT1            ((uint16_t)0x1001)
+#define ACTION_CAL_BATT2            ((uint16_t)0x1002)
+#define ACTION_CAL_BATT3            ((uint16_t)0x1003)
+#define ACTION_CAL_BATT4            ((uint16_t)0x1004)
+#define ACTION_CAL_AND_SAVE_BATT1   ((uint16_t)0x1011)
+#define ACTION_CAL_AND_SAVE_BATT2   ((uint16_t)0x1012)
+#define ACTION_CAL_AND_SAVE_BATT3   ((uint16_t)0x1013)
+#define ACTION_CAL_AND_SAVE_BATT4   ((uint16_t)0x1014)
 
 uint16_t data_process_command(Data_Packet_Type* pkt);
 uint16_t command_get_ram(uint8_t* pktdata, uint8_t* retval);

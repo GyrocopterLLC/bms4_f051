@@ -44,7 +44,7 @@ SOFTWARE.
 volatile uint32_t g_systickCounter = 0;
 volatile uint32_t g_mainFlags = 0;
 
-uint16_t VirtAddVarTab[NB_OF_VAR];
+uint16_t VirtAddVarTab[2*RE_NUMVARS];
 
 //uint8_t comm_buffer[MAIN_BUFFER_LENGTH];
 // ----------------------------------------------------------------------------
@@ -62,7 +62,7 @@ int main(void) {
   InitSysclkInterrupt();
   ADC_Init();
   EE_Config_Addr_Table(VirtAddVarTab);
-  EE_Init();
+  EE_Init(VirtAddVarTab);
   UART_Init();
   UART_Data_Comm_Init();
   CRC32_Init();

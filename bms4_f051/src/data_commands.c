@@ -33,8 +33,6 @@ SOFTWARE.
 #include "adc.h"
 #include "eeprom.h"
 
-static uint8_t command_check_valid_cal(Q16_t real_volts);
-
 /**
  * @brief  Data Process Command
  * 		   Interprets the command in a decoded packet. Calls the appropriate
@@ -292,7 +290,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
 	switch (value_ID) {
     case ACTION_CAL_BATT1:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(1, value32b);
             ADC_Set_Calibration(1, newcal);
             errCode = DATA_PACKET_SUCCESS;
@@ -302,7 +300,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_BATT2:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(2, value32b);
             ADC_Set_Calibration(2, newcal);
             errCode = DATA_PACKET_SUCCESS;
@@ -312,7 +310,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_BATT3:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(3, value32b);
             ADC_Set_Calibration(3, newcal);
             errCode = DATA_PACKET_SUCCESS;
@@ -322,7 +320,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_BATT4:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(4, value32b);
             ADC_Set_Calibration(4, newcal);
             errCode = DATA_PACKET_SUCCESS;
@@ -332,7 +330,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_AND_SAVE_BATT1:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(1, value32b);
             ADC_Set_Calibration(1, newcal);
             EE_SaveInt32(RE_CAL_BATT1, newcal);
@@ -343,7 +341,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_AND_SAVE_BATT2:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(2, value32b);
             ADC_Set_Calibration(2, newcal);
             EE_SaveInt32(RE_CAL_BATT2, newcal);
@@ -354,7 +352,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_AND_SAVE_BATT3:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(3, value32b);
             ADC_Set_Calibration(3, newcal);
             EE_SaveInt32(RE_CAL_BATT3, newcal);
@@ -365,7 +363,7 @@ uint16_t command_run_routine(uint8_t* pktdata) {
         break;
     case ACTION_CAL_AND_SAVE_BATT4:
         value32b = data_packet_extract_32b(pktdata);
-        if(command_check_valid_cal(value32b) == DATA_PACKET_SUCCESS) {
+        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
             newcal = ADC_Calibrate_Voltage(4, value32b);
             ADC_Set_Calibration(4, newcal);
             EE_SaveInt32(RE_CAL_BATT4, newcal);
@@ -378,15 +376,4 @@ uint16_t command_run_routine(uint8_t* pktdata) {
     }
 
 	return errCode;
-}
-
-// Look for valid data coming in
-static uint8_t command_check_valid_cal(Q16_t real_volts) {
-    if(real_volts < 0) {
-        return DATA_PACKET_FAIL;
-    }
-    if(real_volts > F2Q16(5.5f)){
-        return DATA_PACKET_FAIL;
-    }
-    return DATA_PACKET_SUCCESS;
 }

@@ -30,7 +30,7 @@ SOFTWARE.
 #include "qfixed.h"
 #include "adc.h"
 #include "main.h"
-
+#include "data_packet.h"
 
 Q16_t adc_vrefint_cal;
 Q16_t adc_vrefint;
@@ -232,6 +232,29 @@ Q16_t ADC_Calibrate_Voltage(uint8_t which_voltage, Q16_t actual_voltage)
   } else {
     return Q16_UNITY;
   }
+}
+
+/*
+ * @brief  Sanity check on incoming calibration data. Needs to be greater than
+ *         or equal to zero, and less than or equal to the maximum possible
+ *         input (after OpAmp scaling and everything) + 20%
+ * @param  real_volts: Measured voltage (by external method) on a particular
+ *                     battery input
+ * @return Success (1): voltage is valid
+ *         Failure (0): voltage is invalid
+ */
+uint8_t ADC_Check_Valid_Cal(Q16_t real_volts) {
+    Q16_t max_possible_input_voltage;
+    max_possible_input_voltage = Q16_DIV(adc_Vdd, ADC_DIFFAMP_SCALE_FACTOR);
+    max_possible_input_voltage = Q16_MUL(max_possible_input_voltage, F2Q16(1.2f));
+
+    if(real_volts < 0) {
+        return DATA_PACKET_FAIL;
+    }
+    if(real_volts > max_possible_input_voltage) {
+        return DATA_PACKET_FAIL;
+    }
+    return DATA_PACKET_SUCCESS;
 }
 
 Q16_t ADC_Get_Calibration(uint8_t which_voltage) {

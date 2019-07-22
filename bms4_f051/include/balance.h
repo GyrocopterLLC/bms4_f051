@@ -31,6 +31,7 @@ SOFTWARE.
 #define BAL_TIM         TIM3
 #define BAL_PERIOD      (20000)
 #define BAL_ARR         (2399) // 48MHz / 20kHz - 1
+#define BAL_PSC         (0) // No division in prescaler
 
 
 
@@ -41,7 +42,27 @@ typedef enum _Balance_State {
 } Balance_State;
 
 inline void Balance_SetPWM(uint8_t battnum, uint16_t dc) {
-
+    switch(battnum) {
+    case 1:
+        // TIM3_CH4: PB1
+        BAL_TIM->CCR4 = ((uint32_t)dc);
+        break;
+    case 2:
+        // TIM3_CH3: PB0
+        BAL_TIM->CCR3 = ((uint32_t)dc);
+        break;
+    case 3:
+        // TIM3_CH2: PA7
+        BAL_TIM->CCR2 = ((uint32_t)dc);
+        break;
+    case 4:
+        // TIM3_CH1: PA6
+        BAL_TIM->CCR1 = ((uint32_t)dc);
+        break;
+    default:
+        // Do nothing
+        break;
+    }
 }
 
 void Balance_Init(void);

@@ -48,12 +48,12 @@ SOFTWARE.
 // Some helpful constants in Q16
 #define Q16_EXP_BITS    16
 
-#define Q8_UNITY         (uint32_t)256
-#define Q12_UNITY        (uint32_t)4096
-#define Q16_UNITY        (uint32_t)65536
+#define Q8_UNITY         (int32_t)256
+#define Q12_UNITY        (int32_t)4096
+#define Q16_UNITY        (int32_t)65536
 
-#define Q16_3P3         (uint32_t)216269 // Used for 3.3V calculations
-#define Q16_30P0        (uint32_t)1966080 // Used for temperature calcs (30degC)
+#define Q16_3P3         (int32_t)216269 // Used for 3.3V calculations
+#define Q16_30P0        (int32_t)1966080 // Used for temperature calcs (30degC)
 
 typedef int32_t Q16_t; // 1-bit sign, 15-bits mantissa, 16-bits exponent
                        // [-32768.000 to 32767.9999...] resolution .00001526

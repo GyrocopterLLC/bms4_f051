@@ -27,11 +27,14 @@ SOFTWARE.
  */
 
 #include "stm32f0xx.h"
+#include "main.h"
 #include "data_packet.h"
 #include "data_commands.h"
 #include "uart_data_comm.h"
 #include "adc.h"
 #include "eeprom.h"
+
+static Data_Type command_get_datatype(uint16_t data_ID);
 
 /**
  * @brief  Data Process Command
@@ -178,33 +181,38 @@ uint16_t command_get_ram(uint8_t* pktdata, uint8_t* retval) {
     uint16_t errCode = DATA_PACKET_FAIL;
 
     ((void)retvalf);
-    ((void)retval8b);
+//    ((void)retval8b);
     ((void)retval16b);
-    ((void)retval32b);
-
+//    ((void)retval32b);
     ((void)pktdata);
     ((void)retval);
 
     switch(value_ID) {
     case R_VOLT_BATT1:
-    	retval32b = ADC_Battery_Voltage(1);
-    	errCode = RESULT_IS_32B;
-    	break;
     case R_VOLT_BATT2:
-    	retval32b = ADC_Battery_Voltage(2);
-    	errCode = RESULT_IS_32B;
-    	break;
     case R_VOLT_BATT3:
-    	retval32b = ADC_Battery_Voltage(3);
-    	errCode = RESULT_IS_32B;
-    	break;
     case R_VOLT_BATT4:
-    	retval32b = ADC_Battery_Voltage(4);
+    	retval32b = ADC_Battery_Voltage(value_ID - R_VOLT_BATT1);
+    	data_packet_pack_32b(retval, retval32b);
     	errCode = RESULT_IS_32B;
     	break;
     case R_ADDRESS:
         retval8b = UART_Data_Get_Address();
+        data_packet_pack_8b(retval, retval8b);
         errCode = RESULT_IS_8B;
+        break;
+    case RE_CAL_BATT1:
+    case RE_CAL_BATT2:
+    case RE_CAL_BATT3:
+    case RE_CAL_BATT4:
+        retval32b = ADC_Get_Calibration(value_ID - RE_CAL_BATT1);
+        data_packet_pack_32b(retval, retval32b);
+        errCode = RESULT_IS_32B;
+        break;
+    case R_NUM_BATTS:
+        data_packet_pack_16b(retval, NUM_BATTERIES);
+        errCode = RESULT_IS_16B;
+        break;
     }
     return errCode;
 }
@@ -213,7 +221,7 @@ uint16_t command_set_ram(uint8_t* pktdata) {
     // Data is two bytes for value ID
     uint16_t value_ID = data_packet_extract_16b(pktdata);
     //uint16_t value_ID = (((uint16_t)pktdata[0]) << 8) + pktdata[1];
-    pktdata += 2;
+    pktdata += sizeof(uint16_t);
     // Then one to four bytes for value, depending on command
     float valuef;
     uint8_t value8b;
@@ -224,8 +232,7 @@ uint16_t command_set_ram(uint8_t* pktdata) {
     ((void)value8b);
     ((void)value16b);
     ((void)value32b);
-
-    ((void)pktdata);
+//    ((void)pktdata);
 
     uint16_t errCode = DATA_PACKET_FAIL;
     switch(value_ID) {
@@ -235,23 +242,11 @@ uint16_t command_set_ram(uint8_t* pktdata) {
         errCode = DATA_PACKET_SUCCESS;
         break;
     case RE_CAL_BATT1:
-        value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(1, value32b);
-        errCode = DATA_PACKET_SUCCESS;
-        break;
     case RE_CAL_BATT2:
-        value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(2, value32b);
-        errCode = DATA_PACKET_SUCCESS;
-        break;
     case RE_CAL_BATT3:
-        value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(3, value32b);
-        errCode = DATA_PACKET_SUCCESS;
-        break;
     case RE_CAL_BATT4:
         value32b = data_packet_extract_32b(pktdata);
-        ADC_Set_Calibration(4, value32b);
+        ADC_Set_Calibration(value_ID - RE_CAL_BATT1, value32b);
         errCode = DATA_PACKET_SUCCESS;
         break;
     }
@@ -259,14 +254,68 @@ uint16_t command_set_ram(uint8_t* pktdata) {
 }
 
 uint16_t command_get_eeprom(uint8_t* pktdata, uint8_t* retval) {
-	((void)pktdata);
-	((void)retval);
-	return DATA_PACKET_FAIL;
+    // Data is two bytes for value ID
+    uint16_t value_ID = data_packet_extract_16b(pktdata);
+    uint16_t errCode = DATA_PACKET_FAIL;
+    // Data type by variable
+    switch(command_get_datatype(value_ID)) {
+    case Data_Type_Int8:
+        data_packet_pack_8b(retval, (uint8_t)EE_ReadInt16WithDefault(value_ID, 0));
+        errCode = RESULT_IS_8B;
+        break;
+    case Data_Type_Int16:
+        data_packet_pack_16b(retval, EE_ReadInt16WithDefault(value_ID, 0));
+        errCode = RESULT_IS_16B;
+        break;
+    case Data_Type_Int32:
+        data_packet_pack_32b(retval, EE_ReadInt32WithDefault(value_ID, 0));
+        errCode = RESULT_IS_32B;
+        break;
+    case Data_Type_Float:
+        data_packet_pack_float(retval, EE_ReadFloatWithDefault(value_ID, 0));
+        errCode = RESULT_IS_FLOAT;
+        break;
+    case Data_Type_None:
+        errCode = DATA_PACKET_FAIL;
+        break;
+    }
+	return errCode;
 }
 
 uint16_t command_set_eeprom(uint8_t* pktdata) {
-	((void)pktdata);
-	return DATA_PACKET_FAIL;
+    // Data is two bytes for value ID
+    uint16_t value_ID = data_packet_extract_16b(pktdata);
+    pktdata += sizeof(uint16_t);
+    uint16_t errCode = DATA_PACKET_FAIL;
+    // Data type by variable
+	switch(command_get_datatype(value_ID)) {
+	case Data_Type_Int8:
+	    if(EE_SaveInt16(value_ID, (int16_t)data_packet_extract_8b(pktdata)) == FLASH_STATUS_COMPLETE) {
+	        errCode = DATA_PACKET_SUCCESS;
+	    }
+	    break;
+	case Data_Type_Int16:
+	    if(EE_SaveInt16(value_ID, (int16_t)data_packet_extract_16b(pktdata)) == FLASH_STATUS_COMPLETE) {
+	        errCode = DATA_PACKET_SUCCESS;
+	    }
+	    break;
+	case Data_Type_Int32:
+	    if(EE_SaveInt32(value_ID, (int32_t)data_packet_extract_32b(pktdata)) == FLASH_STATUS_COMPLETE) {
+	        errCode = DATA_PACKET_SUCCESS;
+	    }
+	    break;
+	case Data_Type_Float:
+	    if(EE_SaveFloat(value_ID, data_packet_extract_float(pktdata)) == FLASH_STATUS_COMPLETE) {
+	        errCode = DATA_PACKET_SUCCESS;
+	    }
+	    break;
+    case Data_Type_None:
+        errCode = DATA_PACKET_FAIL;
+        break;
+	}
+
+
+    return errCode;
 }
 
 uint16_t command_enable_feature(uint8_t* pktdata) {
@@ -282,98 +331,75 @@ uint16_t command_disable_feature(uint8_t* pktdata) {
 uint16_t command_run_routine(uint8_t* pktdata) {
 	uint16_t errCode = DATA_PACKET_FAIL;
 	uint16_t value_ID = data_packet_extract_16b(pktdata);
-	pktdata+=2;
+	pktdata += sizeof(uint16_t);
 
 	uint32_t value32b;
 	Q16_t newcal;
 
 	switch (value_ID) {
     case ACTION_CAL_BATT1:
-        value32b = data_packet_extract_32b(pktdata);
-        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(1, value32b);
-            ADC_Set_Calibration(1, newcal);
-            errCode = DATA_PACKET_SUCCESS;
-        } else {
-            errCode = DATA_PACKET_FAIL;
-        }
-        break;
     case ACTION_CAL_BATT2:
-        value32b = data_packet_extract_32b(pktdata);
-        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(2, value32b);
-            ADC_Set_Calibration(2, newcal);
-            errCode = DATA_PACKET_SUCCESS;
-        } else {
-            errCode = DATA_PACKET_FAIL;
-        }
-        break;
     case ACTION_CAL_BATT3:
-        value32b = data_packet_extract_32b(pktdata);
-        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(3, value32b);
-            ADC_Set_Calibration(3, newcal);
-            errCode = DATA_PACKET_SUCCESS;
-        } else {
-            errCode = DATA_PACKET_FAIL;
-        }
-        break;
     case ACTION_CAL_BATT4:
         value32b = data_packet_extract_32b(pktdata);
         if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(4, value32b);
-            ADC_Set_Calibration(4, newcal);
+            newcal = ADC_Calibrate_Voltage(value_ID - ACTION_CAL_BATT1, value32b);
+            ADC_Set_Calibration(value_ID - ACTION_CAL_BATT1, newcal);
             errCode = DATA_PACKET_SUCCESS;
         } else {
             errCode = DATA_PACKET_FAIL;
         }
         break;
     case ACTION_CAL_AND_SAVE_BATT1:
-        value32b = data_packet_extract_32b(pktdata);
-        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(1, value32b);
-            ADC_Set_Calibration(1, newcal);
-            EE_SaveInt32(RE_CAL_BATT1, newcal);
-            errCode = DATA_PACKET_SUCCESS;
-        } else {
-            errCode = DATA_PACKET_FAIL;
-        }
-        break;
     case ACTION_CAL_AND_SAVE_BATT2:
-        value32b = data_packet_extract_32b(pktdata);
-        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(2, value32b);
-            ADC_Set_Calibration(2, newcal);
-            EE_SaveInt32(RE_CAL_BATT2, newcal);
-            errCode = DATA_PACKET_SUCCESS;
-        } else {
-            errCode = DATA_PACKET_FAIL;
-        }
-        break;
     case ACTION_CAL_AND_SAVE_BATT3:
-        value32b = data_packet_extract_32b(pktdata);
-        if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(3, value32b);
-            ADC_Set_Calibration(3, newcal);
-            EE_SaveInt32(RE_CAL_BATT3, newcal);
-            errCode = DATA_PACKET_SUCCESS;
-        } else {
-            errCode = DATA_PACKET_FAIL;
-        }
-        break;
     case ACTION_CAL_AND_SAVE_BATT4:
         value32b = data_packet_extract_32b(pktdata);
         if(ADC_Check_Valid_Cal(value32b) == DATA_PACKET_SUCCESS) {
-            newcal = ADC_Calibrate_Voltage(4, value32b);
-            ADC_Set_Calibration(4, newcal);
-            EE_SaveInt32(RE_CAL_BATT4, newcal);
+            newcal = ADC_Calibrate_Voltage(value_ID - ACTION_CAL_AND_SAVE_BATT1, value32b);
+            ADC_Set_Calibration(value_ID - ACTION_CAL_AND_SAVE_BATT1, newcal);
+            EE_SaveInt32(RE_CAL_BATT1 + value_ID - ACTION_CAL_AND_SAVE_BATT1, newcal);
             errCode = DATA_PACKET_SUCCESS;
         } else {
             errCode = DATA_PACKET_FAIL;
         }
         break;
-
     }
 
 	return errCode;
+}
+
+static Data_Type command_get_datatype(uint16_t data_ID) {
+    Data_Type type = Data_Type_None;
+    switch(data_ID) {
+    // 8-bit integer values
+    case R_ADDRESS:
+        type = Data_Type_Int8;
+        break;
+    // 16 bit integer values
+    case R_NUM_BATTS:
+        type = Data_Type_Int16;
+        break;
+    // 32 bit integer values
+    case R_VOLT_BATT1:
+    case R_VOLT_BATT2:
+    case R_VOLT_BATT3:
+    case R_VOLT_BATT4:
+    case R_STAT_BATT1:
+    case R_STAT_BATT2:
+    case R_STAT_BATT3:
+    case R_STAT_BATT4:
+    case RE_CAL_BATT1:
+    case RE_CAL_BATT2:
+    case RE_CAL_BATT3:
+    case RE_CAL_BATT4:
+    case RE_BATT_OVLIM:
+    case RE_BATT_UVLIM:
+    case RE_BATT_SOFTBAL:
+    case RE_BATT_HARDBAL:
+    case RE_BATT_CAPACITY:
+        type = Data_Type_Int32;
+        break;
+    }
+    return type;
 }

@@ -28,9 +28,16 @@ SOFTWARE.
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#include "qfixed.h"
+
 #define MAIN_FLAG_ADC_COMPLETE              ((uint32_t)0x00000001)
 #define MAIN_FLAG_TRIGGER_ADC               ((uint32_t)0x00000002)
 #define MAIN_FLAG_TRIGGER_UART              ((uint32_t)0x00000004)
+
+#define BATTSTATUS_FAULT_OVERVOLTAGE        ((uint32_t)0x00000001)
+#define BATTSTATUS_FAULT_UNDERVOLTAGE       ((uint32_t)0x00000002)
+#define BATTSTATUS_BALANCING_PWM            ((uint32_t)0x00000004)
+#define BATTSTATUS_BALANCING_FULL           ((uint32_t)0x00000008)
 
 #define NUM_BATTERIES                       4
 
@@ -38,6 +45,17 @@ SOFTWARE.
 
 #define ADC_INTERVAL                        500
 #define UART_INTERVAL                       5
+
+// Configuration settings
+typedef struct _main_config {
+    Q16_t BatteryVoltage[NUM_BATTERIES];
+    int32_t BatteryStatus[NUM_BATTERIES];
+    Q16_t MaxVoltage;
+    Q16_t MinVoltage;
+    Q16_t BalanceSoftCap;
+    Q16_t BalanceHardCap;
+    int32_t BatteryCapacity;
+} MAIN_Config;
 
 void MAIN_SysTick_Handler(void);
 void MAIN_Delay(volatile uint32_t delayms);

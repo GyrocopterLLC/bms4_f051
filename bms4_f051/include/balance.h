@@ -27,13 +27,12 @@ SOFTWARE.
 #define _BALANCE_H_
 
 #include "qfixed.h"
+#include "adc.h"
 
 #define BAL_TIM         TIM3
 #define BAL_PERIOD      (20000)
 #define BAL_ARR         (2399) // 48MHz / 20kHz - 1
 #define BAL_PSC         (0) // No division in prescaler
-
-
 
 typedef enum _Balance_State {
     BALANCE_OFF,
@@ -41,21 +40,28 @@ typedef enum _Balance_State {
     BALANCE_FULL
 } Balance_State;
 
+/** Directly sets the PWM duty cycle register for each timer channel.
+ * battnum is 0-aligned, so cell 1 = 0, cell N = N-1
+ * the duty cycle "dc" is a 16 bit number representing the PWM duty cycle
+ * the maximum dc at any given time is the timer's auto-reload register (ARR)
+ * value...above that value, and the PWM output will be on 100% of the time
+ * setting the dc to zero means it will be fully off 100% of the time
+ */
 inline void Balance_SetPWM(uint8_t battnum, uint16_t dc) {
     switch(battnum) {
-    case 1:
+    case ADC_BATT1:
         // TIM3_CH4: PB1
         BAL_TIM->CCR4 = ((uint32_t)dc);
         break;
-    case 2:
+    case ADC_BATT2:
         // TIM3_CH3: PB0
         BAL_TIM->CCR3 = ((uint32_t)dc);
         break;
-    case 3:
+    case ADC_BATT3:
         // TIM3_CH2: PA7
         BAL_TIM->CCR2 = ((uint32_t)dc);
         break;
-    case 4:
+    case ADC_BATT4:
         // TIM3_CH1: PA6
         BAL_TIM->CCR1 = ((uint32_t)dc);
         break;
@@ -67,9 +73,5 @@ inline void Balance_SetPWM(uint8_t battnum, uint16_t dc) {
 
 void Balance_Init(void);
 void Balance_SetIntensity(uint8_t battnum, Q16_t intensity);
-
-
-
-
 
 #endif // _BALANCE_H_

@@ -38,6 +38,7 @@ SOFTWARE.
 #include "data_packet.h"
 #include "data_commands.h"
 #include "uart_data_comm.h"
+#include "balance.h"
 //#include "ui.h"
 
 // ----------------------------------------------------------------------------
@@ -45,6 +46,8 @@ volatile uint32_t g_systickCounter = 0;
 volatile uint32_t g_mainFlags = 0;
 
 uint16_t VirtAddVarTab[2*RE_NUMVARS];
+
+MAIN_Config mcfg;
 
 //uint8_t comm_buffer[MAIN_BUFFER_LENGTH];
 // ----------------------------------------------------------------------------
@@ -89,39 +92,70 @@ int main(void) {
 
       UART_Data_Comm_Periodic_Check();
 
-      /** old version
-       *
-       *
-      num_comm_bytes = UART_Up_Bytes_Available();
-      if((num_comm_bytes + comm_place) > MAIN_BUFFER_LENGTH) {
-        // Overrun! We'll have to clear the buffer and try again.
-        comm_place = 0;
-        // Get the bytes, but reset the buffer after.
-        num_comm_bytes = UART_Up_Rx(comm_buffer, num_comm_bytes);
-        memset(comm_buffer, 0, MAIN_BUFFER_LENGTH);
-      }
-      num_comm_bytes = UART_Up_Rx(&(comm_buffer[comm_place]), num_comm_bytes);
-      comm_place += num_comm_bytes;
+    }
 
-      // If we get a end-of-line character, pass the entire string to the UI
-      // processor.
-      // Then we can clear the buffer.
-      if(strchr_s(comm_buffer, '\n', comm_place) != 0) {
-        UI_Process(comm_buffer, comm_place);
-        comm_place = 0;
-        memset(comm_buffer, 0, MAIN_BUFFER_LENGTH);
-        num_resp_bytes = UI_RespLen();
-        if(num_resp_bytes != 0) {
-          UART_Up_Tx(UI_SendBuf(), num_resp_bytes);
+    // If we finished an ADC run, go through the finishing touches
+    if(MAIN_Check_Flag(MAIN_FLAG_ADC_COMPLETE)) {
+        MAIN_Clear_Flag(MAIN_FLAG_ADC_COMPLETE);
+
+
+        // Save voltages, error checking
+        for(uint8_t i = 0; i < NUM_BATTERIES; i++) {
+            mcfg.BatteryVoltage[i] = ADC_Battery_Voltage(i);
+            // Clear previous status
+            mcfg.BatteryStatus[i] = 0; // TODO: Clear only relevant ones?
+
+            // Over voltage?
+            if(mcfg.BatteryVoltage[i] > mcfg.MaxVoltage) {
+                mcfg.BatteryStatus[i] |= BATTSTATUS_FAULT_OVERVOLTAGE;
+            }
+            // Under voltage?
+            if(mcfg.BatteryVoltage[i] < mcfg.MinVoltage) {
+                mcfg.BatteryStatus[i] |= BATTSTATUS_FAULT_UNDERVOLTAGE;
+            }
+            // Need to balance?
+            if(mcfg.BatteryVoltage[i] > mcfg.BalanceSoftCap) {
+                // Above 100% duty?
+                if(mcfg.BatteryVoltage[i] > mcfg.BalanceHardCap) {
+                    // Balance on full
+                    Balance_SetIntensity(i, Q16_UNITY);
+                    mcfg.BatteryStatus[i] |= BATTSTATUS_BALANCING_PWM;
+                } else {
+                    // Scale between the soft cap (barely balancing) and hard cap (fully balancing)
+                    Q16_t balance_pct = (mcfg.BatteryVoltage[i] - mcfg.BalanceSoftCap) / (mcfg.BalanceHardCap - mcfg.BalanceSoftCap);
+                    Balance_SetIntensity(i, balance_pct);
+                    mcfg.BatteryStatus[i] |= BATTSTATUS_BALANCING_FULL;
+                }
+            }
         }
-      }
-
-//      if(num_comm_bytes > 0) UART_Up_Tx(comm_buffer, num_comm_bytes);
-
-      */
-
     }
   }
+}
+
+void MAIN_LoadVariables(void) {
+    // Loads all settings from EEPROM
+    // If the setting wasn't previously saved, a default value is used
+    mcfg.MaxVoltage = EE_ReadInt32WithDefault(RE_BATT_OVLIM, DFLT_BATT_OVLIM);
+    mcfg.MinVoltage = EE_ReadInt32WithDefault(RE_BATT_UVLIM, DFLT_BATT_UVLIM);
+    mcfg.BalanceSoftCap = EE_ReadInt32WithDefault(RE_BATT_SOFTBAL, DFLT_BATT_SOFTBAL);
+    mcfg.BalanceHardCap = EE_ReadInt32WithDefault(RE_BATT_HARDBAL, DFLT_BATT_HARDBAL);
+    mcfg.BatteryCapacity = EE_ReadInt32WithDefault(RE_BATT_CAPACITY, DFLT_BATT_CAPACITY);
+    ADC_Set_Calibration(ADC_BATT1, EE_ReadInt32WithDefault(RE_CAL_BATT1, DFLT_CAL_BATT1));
+    ADC_Set_Calibration(ADC_BATT2, EE_ReadInt32WithDefault(RE_CAL_BATT2, DFLT_CAL_BATT2));
+    ADC_Set_Calibration(ADC_BATT3, EE_ReadInt32WithDefault(RE_CAL_BATT3, DFLT_CAL_BATT3));
+    ADC_Set_Calibration(ADC_BATT4, EE_ReadInt32WithDefault(RE_CAL_BATT4, DFLT_CAL_BATT4));
+}
+
+void MAIN_SaveVariables(void) {
+    EE_SaveInt32(RE_BATT_OVLIM, mcfg.MaxVoltage);
+    EE_SaveInt32(RE_BATT_UVLIM, mcfg.MinVoltage);
+    EE_SaveInt32(RE_BATT_SOFTBAL, mcfg.BalanceSoftCap);
+    EE_SaveInt32(RE_BATT_HARDBAL, mcfg.BalanceHardCap);
+    EE_SaveInt32(RE_BATT_CAPACITY, mcfg.BatteryCapacity);
+    EE_SaveInt32(RE_CAL_BATT1, ADC_Get_Calibration(ADC_BATT1));
+    EE_SaveInt32(RE_CAL_BATT2, ADC_Get_Calibration(ADC_BATT2));
+    EE_SaveInt32(RE_CAL_BATT3, ADC_Get_Calibration(ADC_BATT3));
+    EE_SaveInt32(RE_CAL_BATT4, ADC_Get_Calibration(ADC_BATT4));
 }
 
 // ----------------------------------------------------------------------------

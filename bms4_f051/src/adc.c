@@ -203,12 +203,12 @@ void ADC_Transfer_Error_Handler(void) {
 
 /**
  * @brief Returns voltage at battery cell in Q16 format.
- * @param which_voltage: Valid values are 1, 2, 3, 4
+ * @param which_voltage: Valid values are 0 to NUM_BATTERIES-1
  * @return Converted voltage in fixed-point with 16.16 scaling
  */
 Q16_t ADC_Battery_Voltage(uint8_t which_voltage) {
-  if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
-    return adc_Vchannels[which_voltage - 1];
+  if(which_voltage < NUM_BATTERIES) {
+    return adc_Vchannels[which_voltage];
   } else {
     return 0;
   }
@@ -219,15 +219,15 @@ Q16_t ADC_Battery_Voltage(uint8_t which_voltage) {
  *         voltage conversion. Pass in the actual value measured externally
  *         and which voltage this was measured on, and the scale factor will
  *         be calculated and returned.
- * @param  which_voltage: Valid values are 1, 2, 3, 4
+ * @param  which_voltage: Valid values are 0 to NUM_BATTERIES-1
  * @param  actual_voltage: Real, measured voltage on that channel in Q16 scale
  * @return The calibration factor in fixed point Q16 scale
  */
 Q16_t ADC_Calibrate_Voltage(uint8_t which_voltage, Q16_t actual_voltage)
 {
   Q16_t temp_val;
-  if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
-    temp_val = Q16_DIV(actual_voltage, adc_Vchannels[which_voltage - 1]);
+  if(which_voltage < NUM_BATTERIES) {
+    temp_val = Q16_DIV(actual_voltage, adc_Vchannels[which_voltage]);
     return temp_val;
   } else {
     return Q16_UNITY;
@@ -258,13 +258,13 @@ uint8_t ADC_Check_Valid_Cal(Q16_t real_volts) {
 }
 
 Q16_t ADC_Get_Calibration(uint8_t which_voltage) {
-    if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
-        return adc_CalFactors[which_voltage-1];
+    if(which_voltage < NUM_BATTERIES) {
+        return adc_CalFactors[which_voltage];
     }
     return 0;
 }
 void ADC_Set_Calibration(uint8_t which_voltage, Q16_t newCalFactor) {
-    if((which_voltage >= 1) && (which_voltage <= NUM_BATTERIES)) {
-        adc_CalFactors[which_voltage - 1] = newCalFactor;
+    if(which_voltage < NUM_BATTERIES) {
+        adc_CalFactors[which_voltage] = newCalFactor;
     }
 }

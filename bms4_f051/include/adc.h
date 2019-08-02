@@ -35,6 +35,11 @@ SOFTWARE.
 #define ADC_CALDATA_TS110 (uint32_t)0x1FFFF7C2
 #define ADC_CALDATA_VREF  (uint32_t)0x1FFFF7BA
 
+#define ADC_BATT1           0
+#define ADC_BATT2           1
+#define ADC_BATT3           2
+#define ADC_BATT4           3
+
 #define ADC_NUM_CHANNELS  6
 #define ADC_CH_V4         0
 #define ADC_CH_V3         1

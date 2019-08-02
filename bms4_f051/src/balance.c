@@ -75,7 +75,7 @@ void Balance_SetIntensity(uint8_t battnum, Q16_t intensity)
         // PWM at some value
         // Intensity is a Q16 value, effectively it's the fractional number x 2^16
         // Multiply by the auto-reload register, and you get a fraction of ARR x 2^16
-        // Then, just need to right-shift by 16
+        // Then, just need to right-shift by 16 to get rid of that 2^16 being carried around
         new_duty = (intensity*(BAL_TIM->ARR)) >> 16;
         Balance_SetPWM(battnum, ((uint16_t)new_duty));
     } else {

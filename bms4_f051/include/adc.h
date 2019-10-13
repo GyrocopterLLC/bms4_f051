@@ -52,7 +52,12 @@ SOFTWARE.
 //#define ADC_OVERSAMPLING_BITS       12
 #define ADC_BITS_TO_Q16             4 // 12-bit ADC, 16-bit Q16
 
-#define ADC_DIFFAMP_SCALE_FACTOR    5
+// Top resistor: 100k
+// Bottom resistor: 73.2k
+// Ratio: 1/0.732 = 1.366
+// As a Q16 number, this is 2^16 / 0.732 = 89530.055
+
+#define ADC_DIFFAMP_SCALE_FACTOR    ((int32_t)89530)
 
 #define ADC_DEFAULT_CAL_FACTORS     {Q16_UNITY, Q16_UNITY, Q16_UNITY, Q16_UNITY}
 

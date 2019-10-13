@@ -176,10 +176,14 @@ void ADC_Conversion_Complete_Handler(void) {
     /* Voltages of batteries
      * Vbat = Vbat_sum * Vdd * diff_amp_scaling * calibration_scaling
      */
-    adc_Vchannels[0] = Q16_MUL((adc_V1_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
-    adc_Vchannels[1] = Q16_MUL((adc_V2_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
-    adc_Vchannels[2] = Q16_MUL((adc_V3_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
-    adc_Vchannels[3] = Q16_MUL((adc_V4_Sum>>8),adc_Vdd) * ADC_DIFFAMP_SCALE_FACTOR;
+    adc_Vchannels[0] = Q16_MUL((adc_V1_Sum>>8),adc_Vdd);
+    adc_Vchannels[1] = Q16_MUL((adc_V2_Sum>>8),adc_Vdd);
+    adc_Vchannels[2] = Q16_MUL((adc_V3_Sum>>8),adc_Vdd);
+    adc_Vchannels[3] = Q16_MUL((adc_V4_Sum>>8),adc_Vdd);
+    adc_Vchannels[0] = Q16_MUL(adc_Vchannels[0], ADC_DIFFAMP_SCALE_FACTOR);
+    adc_Vchannels[1] = Q16_MUL(adc_Vchannels[1], ADC_DIFFAMP_SCALE_FACTOR);
+    adc_Vchannels[2] = Q16_MUL(adc_Vchannels[2], ADC_DIFFAMP_SCALE_FACTOR);
+    adc_Vchannels[3] = Q16_MUL(adc_Vchannels[3], ADC_DIFFAMP_SCALE_FACTOR);
     adc_Vchannels[0] = Q16_MUL(adc_Vchannels[0], adc_CalFactors[0]);
     adc_Vchannels[1] = Q16_MUL(adc_Vchannels[1], adc_CalFactors[1]);
     adc_Vchannels[2] = Q16_MUL(adc_Vchannels[2], adc_CalFactors[2]);

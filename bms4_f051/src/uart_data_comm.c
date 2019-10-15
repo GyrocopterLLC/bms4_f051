@@ -98,7 +98,7 @@ uint8_t UART_Data_Get_Address(void) {
 
 /**
  * @brief  UART Data Communications Periodic Check
- *       Handles the USB serial port incoming data. Determines
+ *       Handles the UART serial port incoming data. Determines
  *       if a properly encoded packet has been received, and
  *       sends to the appropriate handler if it has. Clears
  *       buffer when necessary to accept more data.

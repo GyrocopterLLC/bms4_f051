@@ -120,6 +120,14 @@ void UART_Init(void) {
     RxUpBuffer.Done = 0;
 }
 
+/**
+ *  @brief  Read data bytes from UART comm port.
+ *  @param  buf (unsigned byte array) - the location to copy the data to
+ *  @param  count (unsigned word) - number of bytes to read
+ *  @param  up_or_down (unsigned byte) - select either downstream UART or
+ *          upstream UART
+ *  @return The number of bytes actually read.
+ */
 static int32_t UART_Rx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
     UARTBuffer_Type* rxbuff;
     uint8_t buffer_remaining = 0;
@@ -155,6 +163,14 @@ static int32_t UART_Rx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
     return place;
 }
 
+/**
+ *  @brief  Send data bytes over UART comm port.
+ *  @param  buf (unsigned byte array) - the data to send
+ *  @param  count (unsigned word) - number of bytes to send
+ *  @param  up_or_down (unsigned byte) - select either downstream UART or
+ *          upstream UART
+ *  @return The number of bytes actually sent.
+ */
 static int32_t UART_Tx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
     UARTBuffer_Type* txbuff;
     USART_TypeDef* UART_HW;
@@ -167,7 +183,7 @@ static int32_t UART_Tx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
         UART_HW = UP_UART;
     } else {
         // Wrong selection, error
-        return -1;
+        return 0;
     }
 
     if (count == 0) {
@@ -182,7 +198,7 @@ static int32_t UART_Tx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
         while (!(UART_HW->ISR & USART_ISR_TXE)) {
             if(GetTick() > (tickstart + UART_TX_TIMEOUT_MS)) {
                 // Timeout, error
-                return -1;
+                return 0;
             }
         }
 
@@ -221,13 +237,19 @@ static int32_t UART_Tx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
             }
         } else {
             // Buffer full, error
-            return -1;
+            return 0;
         }
     }
     // Return the number of written bytes.
     return place;
 }
 
+/**
+ *  @brief  Check how many bytes have been received and are ready to read.
+ *  @param  up_or_down (unsigned byte) - select either downstream UART or
+ *          upstream UART
+ *  @return The number of bytes ready to read.
+ */
 static int32_t UART_Bytes_Available(uint8_t up_or_down) {
     uint8_t WrPos, RdPos;
     if (up_or_down == UARTSEL_UP) {
@@ -237,7 +259,7 @@ static int32_t UART_Bytes_Available(uint8_t up_or_down) {
         WrPos = RxDownBuffer.WrPos;
         RdPos = RxDownBuffer.RdPos;
     } else {
-        return -1;
+        return 0;
     }
 
     if (WrPos >= RdPos)

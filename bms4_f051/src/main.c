@@ -69,18 +69,12 @@ int main(void) {
   UART_Init();
   UART_Data_Comm_Init();
   CRC32_Init();
-  // Set the green LED on
-  GPIOB->ODR |= 1 << 3;
 
   // Infinite loop
   while (1) {
 
     if(MAIN_Check_Flag(MAIN_FLAG_TRIGGER_ADC)) {
       MAIN_Clear_Flag(MAIN_FLAG_TRIGGER_ADC);
-
-      // Toggle LEDs
-      GPIOB->ODR ^= (1 << 3);
-      GPIOA->ODR ^= (1 << 15);
 
       // Trigger ADC conversion
       ADC_Trigger();

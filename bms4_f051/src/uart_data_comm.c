@@ -198,10 +198,14 @@ static void UART_Data_Comm_Process_Command(void) {
             // Correct address, move the data packet down for processing correctly
             // If the address was the broadcast address, the packet should be processed,
             // passed downstream, but not replied to.
+            /*
+             * This memmove isn't needed. The data_process_command function skips
+             * the first byte. Also, it would screw up the retransmit on broadcast
+             * packets!
             memmove(UART_Data_Comm_Packet.Data,
                     &(UART_Data_Comm_Packet.Data[1]),
                     UART_Data_Comm_Packet.DataLength - 1);
-            UART_Data_Comm_Packet.DataLength--;
+            UART_Data_Comm_Packet.DataLength--;*/
             errCode = data_process_command(&UART_Data_Comm_Packet);
             if(packet_address == BROADCAST_ADDRESS) {
                 errCode = data_packet_create(&UART_Data_Comm_Packet,

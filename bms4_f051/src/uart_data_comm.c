@@ -166,7 +166,7 @@ void UART_Data_Comm_Periodic_Check(void) {
                 + UART_Data_Comm_Packet.DataLength + PACKET_OVERHEAD_BYTES);
         memmove(UART_Data_Comm_RxBuffer, UART_Data_Comm_RxBuffer + pkt_end,
         PACKET_MAX_LENGTH - pkt_end);
-        UART_Data_Comm_RxBuffer_WrPlace = PACKET_MAX_LENGTH - pkt_end;
+        UART_Data_Comm_RxBuffer_WrPlace -= pkt_end;
     }
 
     // ****** DOWNSTREAM ******
@@ -208,18 +208,21 @@ static void UART_Data_Comm_Process_Command(void) {
             UART_Data_Comm_Packet.DataLength--;*/
             errCode = data_process_command(&UART_Data_Comm_Packet);
             if(packet_address == BROADCAST_ADDRESS) {
+                // Recreate the original packet and send it down
                 errCode = data_packet_create(&UART_Data_Comm_Packet,
                         UART_Data_Comm_Packet.PacketType,
                         UART_Data_Comm_Packet.Data,
                         UART_Data_Comm_Packet.DataLength);
                 send_to = BMS_SEND_DOWNSTREAM;
             } else {
+                // Use the packet created in data_process_command
                 send_to = BMS_SEND_UPSTREAM;
             }
         } else {
             // This might be someone else's packet. Send it down the line as long
             // as we have been initialized (address != 0)
             if (UART_My_Address != 0) {
+                // Recreate the original packet
                 errCode = data_packet_create(&UART_Data_Comm_Packet,
                         UART_Data_Comm_Packet.PacketType,
                         UART_Data_Comm_Packet.Data,

@@ -69,6 +69,7 @@ int main(void) {
   UART_Init();
   UART_Data_Comm_Init();
   CRC32_Init();
+  data_packet_init();
 
   // Infinite loop
   while (1) {
@@ -84,7 +85,9 @@ int main(void) {
     if(MAIN_Check_Flag(MAIN_FLAG_TRIGGER_UART)) {
       MAIN_Clear_Flag(MAIN_FLAG_TRIGGER_UART);
 
-      UART_Data_Comm_Periodic_Check();
+//      UART_Data_Comm_Periodic_Check();
+      UART_Data_Comm_OneByte_Check();
+      UART_Data_Comm_Downstream_Check();
 
     }
 

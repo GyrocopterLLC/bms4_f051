@@ -97,6 +97,60 @@ uint8_t UART_Data_Get_Address(void) {
 }
 
 /**
+ * @brief  UART Data Communications One Byte Check
+ *       Handles the UART serial port incoming data. Determines
+ *       if a properly encoded packet has been received, and
+ *       sends to the appropriate handler if it has. Operates
+ *       using a state machine, no copying to a new buffer.
+ *
+ *       Exception of the data portion of the packet, which
+ *       can be zero to 64 bytes long. That gets copied to
+ *       an internal data buffer if it's non-zero.
+ * @param  None
+ * @retval None
+ */
+void UART_Data_Comm_OneByte_Check(void) {
+    // Loop through each incoming byte
+    int32_t numbytes = UART_Up_Bytes_Available();
+    uint8_t this_byte;
+    while(numbytes > 0) {
+        // Load one new byte
+        if(UART_Up_Rx(&this_byte, 1) != 1) {
+            // Check that a byte was really received
+            return;
+        }
+        numbytes--;
+        if(data_packet_extract_one_byte(&UART_Data_Comm_Packet, this_byte) == DATA_PACKET_SUCCESS) {
+            if(UART_Data_Comm_Packet.RxReady == 1) {
+                // Double checked and good to go
+                UART_Data_Comm_Process_Command();
+            }
+        }
+    }
+    // ****** DOWNSTREAM ******
+    UART_Data_Comm_Downstream_Check();
+}
+
+/**
+ * @brief  UART Data Communications Downstream Check
+ *       Handles the UART serial port incoming data. Repeats
+ *       downstream communications back upstream.
+ * @param  None
+ * @retval None
+ */
+void UART_Data_Comm_Downstream_Check(void) {
+    int32_t numbytes = UART_Down_Bytes_Available();
+    if(numbytes > 0) {
+        UART_Down_Rx(UART_Data_Comm_TxBuffer, numbytes);
+        // Only repeat upstream if we are already addressed
+        if (UART_My_Address != 0) {
+            UART_Up_Tx(UART_Data_Comm_TxBuffer, numbytes);
+        }
+    }
+}
+
+
+/**
  * @brief  UART Data Communications Periodic Check
  *       Handles the UART serial port incoming data. Determines
  *       if a properly encoded packet has been received, and
@@ -170,13 +224,7 @@ void UART_Data_Comm_Periodic_Check(void) {
     }
 
     // ****** DOWNSTREAM ******
-    // check how many bytes came in
-    numbytes = UART_Down_Bytes_Available();
-    UART_Down_Rx(UART_Data_Comm_TxBuffer, numbytes);
-    // Only repeat upstream if we are already addressed
-    if (UART_My_Address != 0) {
-        UART_Up_Tx(UART_Data_Comm_TxBuffer, numbytes);
-    }
+    UART_Data_Comm_Downstream_Check();
 }
 
 /**

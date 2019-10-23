@@ -66,6 +66,28 @@ SOFTWARE.
  * -- 0x92 - NACK
  */
 
+// Global variables. Used for tracking the progress of incoming bytes
+Data_Comm_State_Machine dcsm;
+uint8_t TempPacketArray[PACKET_OVERHEAD_BYTES + PACKET_MAX_DATA_LENGTH];
+
+
+/**
+ * @brief  Data Packet Init
+ *         Initializes the timer used in data packet decoding
+ * @param  None
+ * @retval None
+ */
+void data_packet_init(void) {
+    dcsm.State = DATA_COMM_IDLE;
+    // Initialize timer.
+    RCC->APB1ENR |= RCC_APB1ENR_TIM6EN; // Enable the hardware by turning on its clock
+    DATA_PACKET_TIM->ARR = 0xFFFF; // Needs to be non-zero to count.
+    DATA_PACKET_TIM->PSC = DATA_PACKET_TIMER_PRESCALER;
+    DATA_PACKET_TIM->EGR |= TIM_EGR_UG; // Force an update to move settings to shadow registers
+    NVIC_SetPriority(TIM6_DAC_IRQn, DATA_COMM_IRQ_PRIORITY);
+    NVIC_EnableIRQ(TIM6_DAC_IRQn);
+}
+
 /**
  * @brief  Data Packet Create
  * 		   Generates a data packet from the required fields. Packs the
@@ -109,6 +131,152 @@ uint8_t data_packet_create(Data_Packet_Type* pkt, uint8_t type,
   pkt->TxLength = place;
   return DATA_PACKET_SUCCESS;
 
+}
+
+uint32_t data_packet_recreate_crc(uint8_t PacketType, uint8_t* DataBuffer, uint16_t DataLength) {
+    uint32_t crc;
+    uint16_t place = 0;
+    TempPacketArray[place++] = PACKET_START_0;
+    TempPacketArray[place++] = PACKET_START_1;
+    TempPacketArray[place++] = PacketType;
+    TempPacketArray[place++] = PacketType ^ 0xFF; // All bits flipped
+    TempPacketArray[place++] = (uint8_t)((DataLength & 0xFF00) >> 8); // Hibyte
+    TempPacketArray[place++] = (uint8_t)(DataLength & 0x00FF); // Lobyte
+    for(uint16_t i = 0; i < DataLength; i++) {
+        TempPacketArray[place++] = DataBuffer[i];
+    }
+    crc = CRC32_Generate(TempPacketArray, DataLength + PACKET_NONCRC_OVHD_BYTES);
+
+    return crc;
+}
+
+void data_packet_start_timeout(void) {
+    DATA_PACKET_TIM->CNT = 0xFFFF - DATA_PACKET_TIMER_RELOAD;
+    // Make sure interrupt flag is cleared before enabling the IRQ
+    DATA_PACKET_TIM->SR &= ~(TIM_SR_UIF);
+    DATA_PACKET_TIM->DIER = TIM_DIER_UIE; // Update interrupt enabled
+    DATA_PACKET_TIM->CR1 = TIM_CR1_OPM | TIM_CR1_CEN; // One pulse and enabled.
+}
+
+void data_packet_cancel_timeout(void) {
+    DATA_PACKET_TIM->CR1 = 0; // Stops the timer.
+}
+
+void data_packet_timeout_irq(void) {
+    if(DATA_PACKET_TIM->SR & TIM_SR_UIF) {
+        // Clear the interrupt bit
+        DATA_PACKET_TIM->SR &= ~(TIM_SR_UIF);
+        // Turn off the timer, disable its interrupt
+        DATA_PACKET_TIM->CR1 = 0;
+        DATA_PACKET_TIM->DIER = 0;
+        // Reset the packet decoding state
+        dcsm.State = DATA_COMM_IDLE;
+    }
+}
+
+/**
+ * @brief  Data Packet Extract One Byte Method
+ *         Decodes a data packet coming in from any data channel. Discovers
+ *         the packet type, pulls out the packet data, and checks the CRC
+ *         field for transmission errors.
+ *         Processed one byte at a time using an internal state machine.
+ * @param  pkt - pointer to the Data_Packet_Type which will hold the
+ *               decoded packet
+ * @param  new_byte - raw data byte coming in from any comm channel. Simply
+ *                    pass in the incoming bytes one at a time, this function
+ *                    takes care of keeping track of past bytes.
+ * @retval DATA_PACKET_FAIL - no new packet found (yet!)
+ *         DATA_PACKET_SUCCESS - the packet was valid and was decoded
+ */
+uint8_t data_packet_extract_one_byte(Data_Packet_Type *pkt, uint8_t new_byte) {
+    uint8_t retval = DATA_PACKET_FAIL;
+    // Now everything is determined based on the state
+    switch (dcsm.State) {
+    case DATA_COMM_IDLE:
+        // Is this byte the first Start byte?
+        // Otherwise, ignore
+        if (new_byte == PACKET_START_0) {
+            dcsm.State = DATA_COMM_START_0;
+            // Start timeout. Packet must be received fairly quickly or else comm is reset.
+            data_packet_start_timeout();
+        }
+        break;
+    case DATA_COMM_START_0:
+        // Must be second start byte, otherwise reset
+        if (new_byte == PACKET_START_1) {
+            dcsm.State = DATA_COMM_START_1;
+        } else {
+            // Back to idle since we didn't get the expected sequence
+            dcsm.State = DATA_COMM_IDLE;
+            // Can stop the timer
+        data_packet_cancel_timeout();
+        }
+        break;
+    case DATA_COMM_START_1:
+        // Next byte is packet type. Just read it, can't error check until next one
+        dcsm.PacketType = new_byte;
+        dcsm.State = DATA_COMM_PKT_TYPE;
+        break;
+    case DATA_COMM_PKT_TYPE:
+        // This should be the inverted packet type. Now we can error check
+        new_byte = new_byte^0xFF; // Invert this one
+        if (new_byte != dcsm.PacketType) {
+            dcsm.State = DATA_COMM_IDLE;
+            data_packet_cancel_timeout();
+        } else {
+            dcsm.State = DATA_COMM_NPKT_TYPE;
+        }
+        break;
+    case DATA_COMM_NPKT_TYPE:
+        // Ready to read the first byte of data length
+        dcsm.DataLength = ((uint16_t) new_byte) << 8;
+        dcsm.State = DATA_COMM_DATALEN_0;
+        break;
+    case DATA_COMM_DATALEN_0:
+        // And the second byte
+        dcsm.DataLength += new_byte;
+        dcsm.DataBytesRead = 0;
+        dcsm.State = DATA_COMM_DATALEN_1;
+        break;
+    case DATA_COMM_DATALEN_1:
+        // Now we got to keep track of how much data has been collected
+        // Count to DataLen bytes, then shift in the 4 bytes of CRC-32
+        // Using the packet's data buffer, we don't need to make our own.
+        if (dcsm.DataBytesRead < dcsm.DataLength) {
+            pkt->Data[dcsm.DataBytesRead++] =
+                    new_byte;
+        } else {
+            // Now onto the CRC
+            dcsm.CRC_32 = ((uint32_t) new_byte) << 24;
+            dcsm.State = DATA_COMM_CRC_0;
+        }
+        break;
+    case DATA_COMM_CRC_0:
+        dcsm.CRC_32 += ((uint32_t) new_byte) << 16;
+        dcsm.State = DATA_COMM_CRC_1;
+        break;
+    case DATA_COMM_CRC_1:
+        dcsm.CRC_32 += ((uint32_t) new_byte) << 8;
+        dcsm.State = DATA_COMM_CRC_2;
+        break;
+    case DATA_COMM_CRC_2:
+        // Finally at the end. If this CRC matches, we have a good packet.
+        dcsm.CRC_32 += ((uint32_t) new_byte);
+        // Calculate our own CRC
+        if (dcsm.CRC_32
+                == data_packet_recreate_crc(dcsm.PacketType,
+                        pkt->Data, dcsm.DataLength)) {
+            // Good packet!
+            data_packet_cancel_timeout();
+            pkt->PacketType = dcsm.PacketType;
+            pkt->DataLength = dcsm.DataLength;
+            pkt->RxReady = 1;
+            pkt->FaultCode = NO_FAULT;
+            retval = DATA_PACKET_SUCCESS;
+            dcsm.State = DATA_COMM_IDLE; // Reset for the next packet
+        }
+    }
+    return retval;
 }
 
 /**

@@ -28,6 +28,8 @@ SOFTWARE.
 
 void UART_Data_Comm_Init(void);
 void UART_Data_Comm_Periodic_Check(void);
+void UART_Data_Comm_OneByte_Check(void);
+void UART_Data_Comm_Downstream_Check(void);
 
 void UART_Data_Set_Address(uint8_t newAddress);
 uint8_t UART_Data_Get_Address(void);

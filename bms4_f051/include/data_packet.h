@@ -28,20 +28,48 @@ SOFTWARE.
 
 #include <string.h>
 
-typedef struct
-{
+// Basic timer used for timeouts during packet decoding
+#define DATA_PACKET_TIM     TIM6
+#define DATA_PACKET_TIMER_PRESCALER     479     // 48MHz clock / 480 = 100kHz clock
+#define DATA_PACKET_TIMER_RELOAD        5000    // 5000*(1/100kHz) = 50ms timeout
+#define DATA_COMM_IRQ_PRIORITY          3 // Lowest possible priority
+
+typedef struct {
     uint16_t DataLength;
     uint16_t StartPosition;
     uint8_t PacketType;
     uint8_t Address;
     uint8_t FaultCode;
     uint8_t RxReady;
-    uint8_t* Data;
+    uint8_t *Data;
 
     uint8_t TxReady;
     uint16_t TxLength;
-    uint8_t* TxBuffer;
+    uint8_t *TxBuffer;
 } Data_Packet_Type;
+
+typedef enum _data_comm_state {
+    // Note: each state describes the *previous* byte received.
+    DATA_COMM_IDLE,
+    DATA_COMM_START_0,
+    DATA_COMM_START_1,
+    DATA_COMM_PKT_TYPE,
+    DATA_COMM_NPKT_TYPE,
+    DATA_COMM_DATALEN_0,
+    DATA_COMM_DATALEN_1,
+    DATA_COMM_CRC_0,
+    DATA_COMM_CRC_1,
+    DATA_COMM_CRC_2,
+} Data_Comm_State;
+
+typedef struct _data_comm_state_machine {
+    Data_Comm_State State;
+    uint8_t PacketType;
+    uint16_t DataLength;
+    uint16_t DataBytesRead;
+    uint32_t CRC_32;
+
+} Data_Comm_State_Machine;
 
 #define DATA_PACKET_FAIL        (0)
 #define DATA_PACKET_SUCCESS     (1)
@@ -139,12 +167,13 @@ inline float data_packet_extract_float(uint8_t* array)  {
 
     return fTemp;
 }
-
-uint8_t data_packet_create(Data_Packet_Type* pkt, uint8_t type,
-                          uint8_t* data, uint16_t datalen);
-
-uint8_t data_packet_extract(Data_Packet_Type* pkt, uint8_t* buf,
-                            uint16_t buflen);
+void data_packet_init(void);
+void data_packet_timeout_irq(void);
+uint8_t data_packet_create(Data_Packet_Type *pkt, uint8_t type, uint8_t *data,
+        uint16_t datalen);
+uint8_t data_packet_extract_one_byte(Data_Packet_Type *pkt, uint8_t new_byte);
+uint8_t data_packet_extract(Data_Packet_Type *pkt, uint8_t *buf,
+        uint16_t buflen);
 
 
 #endif //_DATA_PACKET_H_

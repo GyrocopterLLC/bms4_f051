@@ -27,6 +27,7 @@ SOFTWARE.
 #include "main.h"
 #include "adc.h"
 #include "uart.h"
+#include "data_packet.h"
 
 /**
  * @brief  This function handles SysTick Handler.
@@ -77,4 +78,14 @@ void USART1_IRQHandler(void) {
  */
 void USART2_IRQHandler(void) {
   UART_Up_Handler();
+}
+
+/**
+ * @brief  This function handles the TIM6 interrupts.
+ *         TIM6 is used for packet decoding timeouts.
+ * @param  None
+ * @return None
+ */
+void TIM6_DAC_IRQHandler(void) {
+    data_packet_timeout_irq();
 }

@@ -36,6 +36,8 @@ SOFTWARE.
 
 static Data_Type command_get_datatype(uint16_t data_ID);
 
+extern MAIN_Config mcfg;
+
 /**
  * @brief  Data Process Command
  * 		   Interprets the command in a decoded packet. Calls the appropriate
@@ -196,6 +198,15 @@ uint16_t command_get_ram(uint8_t* pktdata, uint8_t* retval) {
     	data_packet_pack_32b(retval, retval32b);
     	errCode = RESULT_IS_32B;
     	break;
+
+    case R_STAT_BATT1:
+    case R_STAT_BATT2:
+    case R_STAT_BATT3:
+    case R_STAT_BATT4:
+        retval32b = mcfg.BatteryStatus[value_ID - R_STAT_BATT1];
+        data_packet_pack_32b(retval, retval32b);
+        errCode = RESULT_IS_32B;
+        break;
     case R_ADDRESS:
         retval8b = UART_Data_Get_Address();
         data_packet_pack_8b(retval, retval8b);

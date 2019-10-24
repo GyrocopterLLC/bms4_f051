@@ -27,7 +27,7 @@ SOFTWARE.
 #define _UART_DATA_COMM_H_
 
 void UART_Data_Comm_Init(void);
-void UART_Data_Comm_Periodic_Check(void);
+//void UART_Data_Comm_Periodic_Check(void);
 void UART_Data_Comm_OneByte_Check(void);
 void UART_Data_Comm_Downstream_Check(void);
 

@@ -28,17 +28,14 @@ SOFTWARE.
 
 #include <string.h>
 
-// Basic timer used for timeouts during packet decoding
-#define DATA_PACKET_TIM     TIM6
-#define DATA_PACKET_TIMER_PRESCALER     479     // 48MHz clock / 480 = 100kHz clock
-#define DATA_PACKET_TIMER_RELOAD        5000    // 5000*(1/100kHz) = 50ms timeout
-#define DATA_COMM_IRQ_PRIORITY          3 // Lowest possible priority
+#define DATA_PACKET_TIMEOUT_MS  50
 
 typedef struct {
+    uint32_t TimerStart; // Beginning timeout value
     uint16_t DataLength;
-    uint16_t StartPosition;
+//    uint16_t StartPosition;
     uint8_t PacketType;
-    uint8_t Address;
+//    uint8_t Address;
     uint8_t FaultCode;
     uint8_t RxReady;
     uint8_t *Data;

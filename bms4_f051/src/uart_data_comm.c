@@ -31,9 +31,9 @@
 #include "uart.h"
 
 // Private variables
-uint8_t UART_Data_Comm_RxBuffer[PACKET_MAX_LENGTH];
+//uint8_t UART_Data_Comm_RxBuffer[PACKET_MAX_LENGTH];
 uint8_t UART_Data_Comm_TxBuffer[PACKET_MAX_LENGTH];
-int32_t UART_Data_Comm_RxBuffer_WrPlace;
+//int32_t UART_Data_Comm_RxBuffer_WrPlace;
 uint8_t UART_Data_Comm_DataBuffer[PACKET_MAX_DATA_LENGTH];
 Data_Packet_Type UART_Data_Comm_Packet;
 
@@ -73,7 +73,7 @@ void UART_Data_Comm_Init(void) {
     UART_Data_Comm_Packet.TxBuffer = UART_Data_Comm_TxBuffer;
     UART_Data_Comm_Packet.TxReady = 0;
     UART_Data_Comm_Packet.RxReady = 0;
-    UART_Data_Comm_RxBuffer_WrPlace = 0;
+//    UART_Data_Comm_RxBuffer_WrPlace = 0;
 }
 
 /**
@@ -88,7 +88,7 @@ void UART_Data_Set_Address(uint8_t newAddress) {
 
 /**
  * @brief  UART Data Get Address
- *      Simple Get function for the local serial port address.
+ *         Simple get function for the local serial port address.
  * @param  None
  * @retval The currently assigned address
  */
@@ -149,7 +149,7 @@ void UART_Data_Comm_Downstream_Check(void) {
     }
 }
 
-
+#if 0
 /**
  * @brief  UART Data Communications Periodic Check
  *       Handles the UART serial port incoming data. Determines
@@ -226,7 +226,7 @@ void UART_Data_Comm_Periodic_Check(void) {
     // ****** DOWNSTREAM ******
     UART_Data_Comm_Downstream_Check();
 }
-
+#endif
 /**
  * @brief  UART Data Communications Process Command
  *       Calls the command processor when a packet has been successfully

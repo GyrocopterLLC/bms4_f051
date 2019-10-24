@@ -71,6 +71,10 @@ int main(void) {
   CRC32_Init();
   data_packet_init();
 
+  // Turn on green led at startup for a little bit.
+  // Just to check for restarts yeh?
+  GPIOA->ODR |= (1<<15);
+
   // Infinite loop
   while (1) {
 
@@ -175,6 +179,11 @@ uint32_t GetTick(void) {
 void MAIN_SysTick_Handler(void) {
   g_systickCounter++;
 
+
+  // turn off greed led after startup
+  if(g_systickCounter > 100) {
+      GPIOA->ODR &= ~(1 << 15);
+  }
   // Scheduling handled here
   if(g_systickCounter % UART_INTERVAL == 0) {
     MAIN_Set_Flag(MAIN_FLAG_TRIGGER_UART);

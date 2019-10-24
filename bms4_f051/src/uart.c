@@ -219,8 +219,10 @@ static int32_t UART_Tx(uint8_t* buf, uint32_t count, uint8_t up_or_down) {
             UART_HW->CR1 |= USART_CR1_TXEIE;
         }
         txbuff->Done = 0;
-        // Turn on green LED while transmitting
-        GPIOB->ODR |= (1 << 3);
+        // Turn on red LED while transmitting up
+        if (up_or_down == UARTSEL_UP) {
+            GPIOB->ODR |= (1 << 3);
+        }
     } else {
         // Already transmitting something
         // Can we fit more data in the buffer?
@@ -346,8 +348,7 @@ void UART_Down_Handler(void) {
         DOWN_UART->CR1 &= ~(USART_CR1_TCIE);
         // Set the done flag
         TxDownBuffer.Done = 1;
-        // Turn off green LED
-        GPIOB->ODR &= ~(1 << 3);
+
     }
 }
 
@@ -404,5 +405,7 @@ void UART_Up_Handler(void) {
         UP_UART->CR1 &= ~(USART_CR1_TCIE);
         // Set the done flag
         TxUpBuffer.Done = 1;
+        // Turn off red LED
+        GPIOB->ODR &= ~(1 << 3);
     }
 }
